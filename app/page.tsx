@@ -13,27 +13,27 @@ import { calendarDays, equityCurve, monthlyPerformance } from "@/lib/mock-data";
 const features = [
   {
     icon: BookOpenCheck,
-    title: "Execution journal",
-    description: "Track entries, stops, targets, R multiple, psychology, mistakes, notes, and chart screenshots.",
+    title: "Joornaal nadiif ah",
+    description: "Geli entry, stop loss, target, R multiple, dareen, qalad, notes, iyo screenshot si trade kasta kuu noqdo cashar.",
   },
   {
     icon: BarChart3,
-    title: "Trader analytics",
-    description: "See performance by pair, strategy, session, direction, emotion, and mistake category.",
+    title: "Falanqayn dhab ah",
+    description: "Arag waxa kuu shaqeeya: pair, strategy, session, direction, emotion, iyo mistake category.",
   },
   {
     icon: Database,
-    title: "Supabase ready",
-    description: "Auth, database tables, and row-level security are prepared for a private multi-user product.",
+    title: "Xog SQL ah",
+    description: "Trade data waxaa lagu kaydiyaa Supabase SQL, qof walbana wuxuu arkaa xogtiisa oo keliya.",
   },
   {
     icon: LockKeyhole,
-    title: "No broker passwords",
-    description: "Edge Journal is a journal only. It never stores broker credentials or trading account passwords.",
+    title: "Ammaan sare",
+    description: "Broker password lama kaydiyo. Edge Journal waa manual journaling iyo trade analysis oo keliya.",
   },
 ];
 
-const plans = ["Unlimited manual trades", "Dashboard and analytics", "Supabase cloud sync", "Vercel free plan ready"];
+const plans = ["Unlimited manual trades", "Reports la daabacan karo", "Dashboard iyo analytics", "Supabase SQL cloud sync"];
 const whatsappLink = "https://wa.me/252633454984?text=Salaam%2C%20waxaan%20rabaa%20Edge%20Journal%20pricing%20iyo%20setup.";
 
 export default function LandingPage() {
@@ -70,7 +70,7 @@ export default function LandingPage() {
           className="absolute inset-0 -z-10 opacity-22"
           style={{
             backgroundImage:
-              "linear-gradient(90deg, var(--background) 0%, transparent 38%, var(--background) 100%), url('https://images.unsplash.com/photo-1642790106117-e829e14a795f?q=80&w=1800&auto=format&fit=crop')",
+              "linear-gradient(90deg, var(--background) 0%, transparent 42%, var(--background) 100%), url('/brand/edge-logo-wide.png')",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -78,13 +78,17 @@ export default function LandingPage() {
         <div className="market-grid absolute inset-0 -z-10 opacity-35" />
         <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="pt-8">
-            <Badge variant="secondary" className="mb-5">Professional forex trade journal</Badge>
+            <Badge variant="secondary" className="mb-5">Joornaalka trader-ka discipline-ka leh</Badge>
             <h1 className="max-w-4xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-              Build discipline. Protect capital. Prove your edge.
+              Ka dhig trading-kaaga mid la cabbiri karo, la hagaajin karo, lana guulaysan karo.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Edge Journal turns every trade into evidence. Track your setups, sessions, psychology, and mistakes,
-              then use reports to see what deserves your risk and what needs to be removed from your plan.
+              Edge Journal wuxuu kaa caawinayaa inaad ka baxdo qiyaas iyo dareen. Trade kasta wuxuu noqdaa caddeyn:
+              strategy, session, risk, qalad, iyo natiijo. Haddii aad rabto inaad noqoto trader nidaam leh, halkan ka bilow.
+            </p>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+              Maanta ma aha inaad trade badan gasho; waa inaad fahamtaa trade-kii saxda ahaa, sababtii uu u shaqeeyay,
+              iyo qaladka kaa celinaya consistency-ga.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
@@ -95,7 +99,7 @@ export default function LandingPage() {
               </Button>
               <Button asChild size="lg" variant="outline">
                 <a href={whatsappLink} target="_blank" rel="noreferrer">
-                  WhatsApp pricing
+                  Qiimaha igala hadal WhatsApp
                   <MessageCircle className="size-4" />
                 </a>
               </Button>
@@ -106,8 +110,8 @@ export default function LandingPage() {
             <div className="rounded-md border bg-background/80 p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">Live product preview</p>
-                  <h2 className="text-xl font-semibold">Equity and execution cockpit</h2>
+                  <p className="text-sm text-muted-foreground">AI brand preview</p>
+                  <h2 className="text-xl font-semibold">Edge Journal trader cockpit</h2>
                 </div>
                 <Badge variant="positive">+12.8% MTD</Badge>
               </div>
@@ -139,7 +143,10 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
             <Badge variant="outline" className="mb-4">Edge clarity</Badge>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Everything a discretionary trader expects.</h2>
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Nidaam kaa dhigaya trader is xisaabiya.</h2>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Haddii aadan qorin waxa aad sameyso, ma ogaan kartid waxa lagu hagaajinayo. Edge Journal wuxuu xogtaada u rogaa go'aan cad.
+            </p>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {features.map((feature) => (
@@ -162,7 +169,7 @@ export default function LandingPage() {
           <Card className="glass-panel">
             <CardHeader>
               <CardTitle>Monthly performance</CardTitle>
-              <CardDescription>Compare gross wins and drawdowns without spreadsheet drift.</CardDescription>
+              <CardDescription>Bil kasta si cad u arag faa'iidada, khasaaraha, iyo drawdown-ka.</CardDescription>
             </CardHeader>
             <CardContent>
               <MonthlyPerformanceChart data={monthlyPerformance} />
@@ -171,7 +178,7 @@ export default function LandingPage() {
           <Card className="glass-panel">
             <CardHeader>
               <CardTitle>Calendar heatmap</CardTitle>
-              <CardDescription>Spot streaks, high-risk days, and consistency patterns.</CardDescription>
+              <CardDescription>Ogow maalmaha ugu fiican, maalmaha khatarta ah, iyo pattern-ka consistency-gaaga.</CardDescription>
             </CardHeader>
             <CardContent>
               <CalendarHeatmap days={calendarDays} />
@@ -184,8 +191,8 @@ export default function LandingPage() {
         <Card className="glass-panel mx-auto max-w-3xl">
           <CardHeader className="text-center">
             <Badge variant="secondary" className="mx-auto mb-3">Pricing placeholder</Badge>
-            <CardTitle className="text-3xl">Get Edge Journal setup support.</CardTitle>
-            <CardDescription>Contact us on WhatsApp for pricing, setup help, and trader journal onboarding.</CardDescription>
+            <CardTitle className="text-3xl">Rabtaa Edge Journal kuu gaar ah?</CardTitle>
+            <CardDescription>WhatsApp nagala soo xiriir si aad u hesho pricing, setup, iyo hagid ku saabsan isticmaalka journal-ka.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -199,7 +206,7 @@ export default function LandingPage() {
             <div className="mt-6 flex justify-center">
               <Button asChild size="lg">
                 <a href={whatsappLink} target="_blank" rel="noreferrer">
-                  Contact on WhatsApp
+                  WhatsApp igala soo xiriir
                   <MessageCircle className="size-4" />
                 </a>
               </Button>

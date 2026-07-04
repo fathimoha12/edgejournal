@@ -1,4 +1,4 @@
--- Gold Uleeye Supabase schema
+-- Edge Journal Supabase schema
 -- Run this in the Supabase SQL editor after creating your project.
 
 create extension if not exists "pgcrypto";

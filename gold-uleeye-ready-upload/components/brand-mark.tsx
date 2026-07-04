@@ -17,9 +17,9 @@ export function BrandMark({ className = "size-10" }: { className?: string }) {
   }, []);
 
   return (
-    <div className={`${className} overflow-hidden rounded-md border bg-background`}>
+    <div className={`${className} overflow-hidden rounded-md border bg-white p-1 dark:bg-black`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={logo || "/brand/edge-icon.png"} alt="Edge Journal logo" className="h-full w-full object-cover" />
+      <img src={logo || "/brand/edge-icon-transparent.png"} alt="Edge Journal logo" className="h-full w-full object-contain" />
     </div>
   );
 }
