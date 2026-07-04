@@ -114,7 +114,7 @@ function tradeToRow(trade: Trade, userId: string) {
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
-  return "Supabase SQL database lama gaari karo. Hubi env variables-ka iyo schema-ga.";
+  return "Private account storage is not reachable. Check the app setup and deploy again.";
 }
 
 export function JournalWorkspace() {
@@ -137,7 +137,7 @@ export function JournalWorkspace() {
       const user = userResponse.data.user;
 
       if (userResponse.error) throw userResponse.error;
-      if (!user) throw new Error("Fadlan login samee si xogtaada SQL database looga akhriyo.");
+      if (!user) throw new Error("Please sign in to load your private journal data.");
 
       setAccountEmail(user.email ?? "");
 
@@ -285,7 +285,7 @@ export function JournalWorkspace() {
         <CardHeader>
           <CardTitle>Trade list</CardTitle>
           <CardDescription>
-            Data-kan wuxuu ku kaydsan yahay Supabase SQL database{accountEmail ? `: ${accountEmail}` : ""}. Browser storage looma isticmaalayo trades.
+            This journal is saved to your private account workspace{accountEmail ? `: ${accountEmail}` : ""}. Browser storage is not used for trades.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -310,7 +310,7 @@ export function JournalWorkspace() {
             <div className="grid rounded-lg border border-dashed bg-background/35 p-8 text-center text-sm text-muted-foreground">
               <span className="inline-flex items-center justify-center gap-2">
                 <Loader2 className="size-4 animate-spin" />
-                Loading SQL trades...
+                Loading trades...
               </span>
             </div>
           ) : filteredTrades.length ? (
@@ -319,7 +319,7 @@ export function JournalWorkspace() {
             <div className="rounded-lg border border-dashed bg-background/35 p-8 text-center">
               <p className="font-medium">Wali trade lama gelin.</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Ku dar trade cusub form-ka kore, ama isticmaal Load sample data haddii aad rabto tusaale SQL-ga lagu shubo.
+                Add a new trade with the form above, or use Load sample data if you want a quick example.
               </p>
             </div>
           )}

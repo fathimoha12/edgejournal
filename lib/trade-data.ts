@@ -103,7 +103,7 @@ export function tradeToRow(trade: Trade, userId: string) {
 
 export function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
-  return "Supabase SQL database lama gaari karo. Hubi env variables-ka iyo schema-ga.";
+  return "Private account storage is not reachable. Check the app setup and deploy again.";
 }
 
 export function useSupabaseTrades() {
@@ -122,7 +122,7 @@ export function useSupabaseTrades() {
       const user = userResponse.data.user;
 
       if (userResponse.error) throw userResponse.error;
-      if (!user) throw new Error("Fadlan login samee si xogtaada SQL database looga akhriyo.");
+      if (!user) throw new Error("Please sign in to load your private journal data.");
 
       setAccountEmail(user.email ?? "");
 

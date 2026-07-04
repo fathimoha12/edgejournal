@@ -82,7 +82,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <AppShell title="Dashboard" subtitle="3RR objective, session totals, strategy edge, and trade quality metrics from Supabase SQL.">
+    <AppShell title="Dashboard" subtitle="3RR objective, session totals, strategy edge, and trade quality metrics.">
       <div className="grid min-w-0 gap-6">
         <DataStatus loading={loading} error={error} accountEmail={accountEmail} trades={trades.length} />
 
@@ -170,7 +170,7 @@ function DataStatus({ loading, error, accountEmail, trades }: { loading: boolean
     return (
       <Card className="glass-panel">
         <CardContent className="py-4 text-sm text-muted-foreground">
-          Dashboard-kan wuxuu akhrinayaa Supabase SQL data{accountEmail ? `: ${accountEmail}` : ""}.
+          Dashboard is showing private account data{accountEmail ? `: ${accountEmail}` : ""}.
         </CardContent>
       </Card>
     );
@@ -179,7 +179,7 @@ function DataStatus({ loading, error, accountEmail, trades }: { loading: boolean
   return (
     <Card className="glass-panel">
       <CardContent className="py-4 text-sm text-muted-foreground">
-        {loading ? "Loading Supabase SQL dashboard data..." : error || "Wali trade SQL database-ka kuma jiro. Ku dar trade Journal-ka si dashboard-ku u buuxsamo."}
+        {loading ? "Loading dashboard data..." : error || "No trades have been saved yet. Add a trade in the Journal to fill the dashboard."}
       </CardContent>
     </Card>
   );

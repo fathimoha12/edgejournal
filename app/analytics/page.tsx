@@ -14,13 +14,13 @@ export default function AnalyticsPage() {
   const { dashboardMetrics, emotions, mistakes, pairPerformance, sessionPerformance, strategyPerformance } = buildTradeAnalytics(trades);
 
   return (
-    <AppShell title="Analytics" subtitle="Find which markets, strategies, sessions, and behaviors produce edge from Supabase SQL.">
+    <AppShell title="Analytics" subtitle="Find which markets, strategies, sessions, and behaviors produce your edge.">
       <div className="grid gap-5">
         <Card className="glass-panel">
           <CardContent className="py-4 text-sm text-muted-foreground">
             {loading
-              ? "Loading Supabase SQL analytics..."
-              : error || `Analytics-kan wuxuu akhrinayaa Supabase SQL data${accountEmail ? `: ${accountEmail}` : ""}.`}
+              ? "Loading analytics..."
+              : error || `Analytics are showing private account data${accountEmail ? `: ${accountEmail}` : ""}.`}
           </CardContent>
         </Card>
 

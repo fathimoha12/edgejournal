@@ -5,7 +5,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export function getSupabaseBrowserClient() {
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Missing Supabase environment variables.");
+    throw new Error("Missing app environment variables.");
   }
 
   if (!supabaseUrl.startsWith("https://") || !supabaseUrl.includes(".supabase.co")) {
@@ -13,7 +13,7 @@ export function getSupabaseBrowserClient() {
   }
 
   if (!supabaseAnonKey.startsWith("ey") && !supabaseAnonKey.startsWith("sb_publishable_")) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY sax ma aha. Copy garee anon public ama publishable key-ga Supabase Project Settings > API.");
+    throw new Error("The public app key is not valid. Copy the correct public key from your project settings.");
   }
 
   return createClient(supabaseUrl, supabaseAnonKey);

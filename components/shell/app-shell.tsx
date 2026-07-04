@@ -49,7 +49,7 @@ export function AppShell({
       const supabase = getSupabaseBrowserClient();
       await supabase.auth.signOut();
     } catch {
-      // Local demo mode does not have Supabase environment variables.
+      // Local demo mode may not have account service environment variables.
     }
 
     window.localStorage.removeItem("edge-journal-session");
@@ -92,7 +92,7 @@ export function AppShell({
             High-security journal
           </div>
           <p className="text-xs leading-5 text-muted-foreground">
-            No broker credentials are stored. Supabase RLS, auth, and secure headers keep trader data scoped to each account.
+            No broker credentials are stored. Secure account rules keep trader data scoped to each signed-in account.
           </p>
           <Button type="button" variant="outline" size="sm" className="w-full justify-start gap-2" onClick={handleLogout}>
             <LogOut className="size-4" />

@@ -103,8 +103,8 @@ export function TradingAreaPage({ area, title, subtitle }: { area: TradingArea; 
         <Card className="glass-panel">
           <CardContent className="py-4 text-sm text-muted-foreground">
             {loading
-              ? "Loading Supabase SQL section data..."
-              : error || `${title} wuxuu akhrinayaa Supabase SQL data${accountEmail ? `: ${accountEmail}` : ""}.`}
+              ? "Loading section data..."
+              : error || `${title} is showing private account data${accountEmail ? `: ${accountEmail}` : ""}.`}
           </CardContent>
         </Card>
 

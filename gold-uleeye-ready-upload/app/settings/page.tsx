@@ -24,7 +24,7 @@ export default function SettingsPage() {
         setEmail(user?.email ?? "");
         setDisplayName(String(user?.user_metadata?.display_name ?? user?.email?.split("@")[0] ?? ""));
       } catch {
-        setProfileStatus("Login samee si profile-kaaga Supabase loo akhriyo.");
+        setProfileStatus("Sign in to load your profile.");
       }
     }
 
@@ -51,7 +51,7 @@ export default function SettingsPage() {
         <Card className="glass-panel">
           <CardHeader>
             <CardTitle>User profile</CardTitle>
-            <CardDescription>Profile-kan wuxuu ka imanayaa Supabase auth account-ka login-gareysan.</CardDescription>
+            <CardDescription>This profile belongs to the account currently signed in.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <Field label="Display name">

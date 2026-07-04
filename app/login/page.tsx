@@ -22,7 +22,7 @@ function withTimeout<T>(promise: Promise<T>, message: string) {
 
 function getAuthErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
-  return "Supabase auth error ayaa dhacay. Hubi URL/key-ga iyo redeploy-ga.";
+  return "Authentication setup error. Check the app keys and deploy again.";
 }
 
 export default function LoginPage() {
@@ -45,11 +45,11 @@ export default function LoginPage() {
         mode === "sign-in"
           ? await withTimeout(
               supabase.auth.signInWithPassword({ email: email.trim(), password }),
-              "Sign in wuu waqtigiisii dhaafay. Hubi Supabase URL/key-ga Vercel, kadib redeploy samee.",
+              "Sign in timed out. Check the app keys in Vercel, then deploy again.",
             )
           : await withTimeout(
               supabase.auth.signUp({ email: email.trim(), password }),
-              "Register wuu waqtigiisii dhaafay. Hubi Supabase URL/key-ga Vercel, kadib redeploy samee.",
+              "Registration timed out. Check the app keys in Vercel, then deploy again.",
             );
 
       if (response.error) {
@@ -80,7 +80,7 @@ export default function LoginPage() {
               <CandlestickChart className="size-5" />
             </div>
             <CardTitle>Edge Journal account</CardTitle>
-            <CardDescription>Sign in ama register hal meel. Trade data waxaa lagu kaydiyaa Supabase SQL database, ma aha browser storage.</CardDescription>
+            <CardDescription>Sign in or create an account. Your journal is saved to your private account workspace, not browser storage.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4 grid grid-cols-2 rounded-lg border bg-background/45 p-1">
