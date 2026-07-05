@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, CandlestickChart, Loader2, LockKeyhole, UserPlus } from "lucide-react";
+import { ArrowLeft, CandlestickChart, Loader2, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,6 @@ function getAuthErrorMessage(error: unknown) {
 export default function LoginPage() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [mode, setMode] = React.useState<"sign-in" | "sign-up">("sign-in");
   const [status, setStatus] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
@@ -41,21 +40,13 @@ export default function LoginPage() {
 
     try {
       const supabase = getSupabaseBrowserClient();
-      const response =
-        mode === "sign-in"
-          ? await withTimeout(
-              supabase.auth.signInWithPassword({ email: email.trim(), password }),
-              "Sign in timed out. Check the app keys in Vercel, then deploy again.",
-            )
-          : await withTimeout(
-              supabase.auth.signUp({ email: email.trim(), password }),
-              "Registration timed out. Check the app keys in Vercel, then deploy again.",
-            );
+      const response = await withTimeout(
+        supabase.auth.signInWithPassword({ email: email.trim(), password }),
+        "Sign in timed out. Check the app keys in Vercel, then deploy again.",
+      );
 
       if (response.error) {
         setStatus(response.error.message);
-      } else if (mode === "sign-up" && !response.data.session) {
-        setStatus("Account waa la abuuray. Haddii email confirmation kuu shidan yahay, email-ka xaqiiji kadibna sign in samee.");
       } else {
         window.location.href = "/dashboard";
       }
@@ -80,20 +71,9 @@ export default function LoginPage() {
               <CandlestickChart className="size-5" />
             </div>
             <CardTitle>Edge Journal account</CardTitle>
-            <CardDescription>Sign in or create an account. Your journal is saved to your private account workspace, not browser storage.</CardDescription>
+            <CardDescription>Sign in with an account created by the Edge Journal owner.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 grid grid-cols-2 rounded-lg border bg-background/45 p-1">
-              <Button type="button" variant={mode === "sign-in" ? "default" : "ghost"} onClick={() => setMode("sign-in")}>
-                <LockKeyhole className="size-4" />
-                Sign in
-              </Button>
-              <Button type="button" variant={mode === "sign-up" ? "default" : "ghost"} onClick={() => setMode("sign-up")}>
-                <UserPlus className="size-4" />
-                Register
-              </Button>
-            </div>
-
             <form className="grid gap-4" onSubmit={submit}>
               <div className="grid gap-2">
                 <Label>Email</Label>
@@ -107,17 +87,10 @@ export default function LoginPage() {
               {status ? <p className="rounded-md border bg-background/50 p-3 text-sm text-muted-foreground">{status}</p> : null}
 
               <Button type="submit" disabled={loading}>
-                {loading ? <Loader2 className="size-4 animate-spin" /> : mode === "sign-in" ? <LockKeyhole className="size-4" /> : <UserPlus className="size-4" />}
-                {mode === "sign-in" ? "Sign in" : "Register account"}
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <LockKeyhole className="size-4" />}
+                Sign in
               </Button>
             </form>
-
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              {mode === "sign-in" ? "Account ma haysatid?" : "Account hore ma leedahay?"}{" "}
-              <button className="font-medium text-primary" onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}>
-                {mode === "sign-in" ? "Register" : "Sign in"}
-              </button>
-            </div>
           </CardContent>
         </Card>
       </div>

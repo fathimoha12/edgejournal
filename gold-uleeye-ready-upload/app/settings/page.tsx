@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { AppShell } from "@/components/shell/app-shell";
 import { AppearanceSettings } from "@/components/appearance-settings";
+import { AdminUserManager } from "@/components/admin-user-manager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -133,3 +134,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
