@@ -76,6 +76,8 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        <AdminUserManager currentEmail={email} />
+
         <Card className="glass-panel">
           <CardHeader>
             <CardTitle>Trading account settings</CardTitle>
