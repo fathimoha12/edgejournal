@@ -149,10 +149,12 @@ export function buildTradeAnalytics(trades: Trade[]) {
   const tpTrades = trades.filter((trade) => trade.result === "TP");
   const slTrades = trades.filter((trade) => trade.result === "SL");
   const closedTrades = trades.filter((trade) => trade.result !== "Open");
-  const grossProfit = closedTrades.filter((trade) => trade.profitLoss > 0).reduce((sum, trade) => sum + trade.profitLoss, 0);
-  const grossLoss = Math.abs(closedTrades.filter((trade) => trade.profitLoss < 0).reduce((sum, trade) => sum + trade.profitLoss, 0));
-  const profits = closedTrades.filter((trade) => trade.profitLoss > 0).map((trade) => trade.profitLoss);
-  const losses = closedTrades.filter((trade) => trade.profitLoss < 0).map((trade) => trade.profitLoss);
+  const tpProfitTrades = closedTrades.filter((trade) => trade.result === "TP" && trade.profitLoss > 0);
+  const slLossTrades = closedTrades.filter((trade) => trade.result === "SL" && trade.profitLoss < 0);
+  const grossProfit = tpProfitTrades.reduce((sum, trade) => sum + trade.profitLoss, 0);
+  const grossLoss = Math.abs(slLossTrades.reduce((sum, trade) => sum + trade.profitLoss, 0));
+  const profits = tpProfitTrades.map((trade) => trade.profitLoss);
+  const losses = slLossTrades.map((trade) => trade.profitLoss);
 
   const dashboardMetrics = {
     totalTrades: trades.length,
@@ -170,8 +172,8 @@ export function buildTradeAnalytics(trades: Trade[]) {
     minSl: trades.length ? Math.min(...trades.map((trade) => trade.stopLoss)) : 0,
     maxTp: trades.length ? Math.max(...trades.map((trade) => trade.takeProfit)) : 0,
     minTp: trades.length ? Math.min(...trades.map((trade) => trade.takeProfit)) : 0,
-    biggestProfit: trades.length ? Math.max(...trades.map((trade) => trade.profitLoss)) : 0,
-    biggestLoss: trades.length ? Math.min(...trades.map((trade) => trade.profitLoss)) : 0,
+    biggestProfit: profits.length ? Math.max(...profits) : 0,
+    biggestLoss: losses.length ? Math.min(...losses) : 0,
     averageProfit: average(profits),
     averageLoss: average(losses),
   };
@@ -223,8 +225,8 @@ export function buildTradeAnalytics(trades: Trade[]) {
     closedTrades.reduce<Record<string, { month: string; profit: number; loss: number; net: number }>>((months, trade) => {
       const month = new Date(`${trade.date}T00:00:00`).toLocaleDateString("en-US", { month: "short" });
       months[month] ??= { month, profit: 0, loss: 0, net: 0 };
-      if (trade.profitLoss >= 0) months[month].profit += trade.profitLoss;
-      else months[month].loss += trade.profitLoss;
+      if (trade.result === "TP" && trade.profitLoss > 0) months[month].profit += trade.profitLoss;
+      if (trade.result === "SL" && trade.profitLoss < 0) months[month].loss += trade.profitLoss;
       months[month].net += trade.profitLoss;
       return months;
     }, {}),

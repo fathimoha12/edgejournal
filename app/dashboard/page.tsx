@@ -66,7 +66,7 @@ export default function DashboardPage() {
     { label: "Win Rate", value: formatPercent(dashboardMetrics.winRate), change: "TP / closed trades", icon: Percent, tone: "positive" as const },
     { label: "Loss Rate", value: formatPercent(dashboardMetrics.lossRate), change: "SL / closed trades", icon: ArrowDownRight, tone: "negative" as const },
     { label: "Average R:R", value: dashboardMetrics.averageRr.toFixed(2), change: "Objective is 3.00", icon: Scale },
-    { label: "Profit Factor", value: dashboardMetrics.profitFactor.toFixed(2), change: "Gross profit / loss", icon: BarChart3, tone: "positive" as const },
+    { label: "Profit Factor", value: dashboardMetrics.profitFactor.toFixed(2), change: "TP profit / SL loss", icon: BarChart3, tone: "positive" as const },
   ];
 
   const priceStats = [
@@ -75,10 +75,10 @@ export default function DashboardPage() {
     { label: "Minimum SL", value: dashboardMetrics.minSl.toFixed(4), change: "Lowest stop price", icon: TrendingDown },
     { label: "Maximum TP", value: dashboardMetrics.maxTp.toFixed(4), change: "Highest target price", icon: ArrowUpRight },
     { label: "Minimum TP", value: dashboardMetrics.minTp.toFixed(4), change: "Lowest target price", icon: ArrowDownRight },
-    { label: "Biggest Profit", value: formatCurrency(dashboardMetrics.biggestProfit), change: "Best closed trade", icon: BadgeDollarSign, tone: "positive" as const },
-    { label: "Biggest Loss", value: formatCurrency(dashboardMetrics.biggestLoss), change: "Worst closed trade", icon: BadgeDollarSign, tone: "negative" as const },
-    { label: "Average Profit", value: formatCurrency(dashboardMetrics.averageProfit), change: "Winning and partial trades", icon: TrendingUp, tone: "positive" as const },
-    { label: "Average Loss", value: formatCurrency(dashboardMetrics.averageLoss), change: "Stopped trades", icon: TrendingDown, tone: "negative" as const },
+    { label: "Biggest Profit", value: formatCurrency(dashboardMetrics.biggestProfit), change: "Best TP trade", icon: BadgeDollarSign, tone: "positive" as const },
+    { label: "Biggest Loss", value: formatCurrency(dashboardMetrics.biggestLoss), change: "Worst SL trade", icon: BadgeDollarSign, tone: "negative" as const },
+    { label: "Average Profit", value: formatCurrency(dashboardMetrics.averageProfit), change: "TP trades only", icon: TrendingUp, tone: "positive" as const },
+    { label: "Average Loss", value: formatCurrency(dashboardMetrics.averageLoss), change: "SL trades only", icon: TrendingDown, tone: "negative" as const },
   ];
 
   return (
@@ -151,7 +151,7 @@ export default function DashboardPage() {
           <ChartCard title="Strategy performance" description="Net P/L by KIL, LQ, IRL/ERL, OF, Model #1, SMT, and 2SMT.">
             <PerformanceBarChart data={strategyPerformance} />
           </ChartCard>
-          <ChartCard title="Monthly profit/loss" description="Gross profit and loss by month.">
+          <ChartCard title="Monthly profit/loss" description="TP profit and SL loss by month.">
             <MonthlyPerformanceChart data={monthlyPerformance} />
           </ChartCard>
           <ChartCard title="R-multiple distribution" description="How often trades finish at -1R, 0R, partial R, or full 3R+.">

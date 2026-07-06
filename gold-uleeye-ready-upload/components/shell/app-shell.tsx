@@ -7,6 +7,7 @@ import {
   BookOpenCheck,
   FlaskConical,
   Gift,
+  ImageIcon,
   LayoutDashboard,
   LogOut,
   PanelLeft,
@@ -29,6 +30,7 @@ const navigation = [
   { name: "Funded", href: "/funded-challenge", icon: Trophy },
   { name: "Account", href: "/account-challenge", icon: WalletCards },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Posters", href: "/posters", icon: ImageIcon },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
