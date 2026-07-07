@@ -289,9 +289,57 @@ function NumberField({
   value: number;
   onChange: (value: number) => void;
 }) {
+  const [inputValue, setInputValue] = React.useState(String(value));
+  const [focused, setFocused] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!focused) setInputValue(String(value));
+  }, [focused, value]);
+
+  function handleChange(nextValue: string) {
+    setInputValue(nextValue);
+
+    if (nextValue.trim() === "") {
+      onChange(0);
+      return;
+    }
+
+    if (nextValue === "-" || nextValue === "." || nextValue === "-.") return;
+
+    const parsed = Number(nextValue);
+    if (Number.isFinite(parsed)) onChange(parsed);
+  }
+
+  function handleBlur() {
+    setFocused(false);
+
+    if (inputValue.trim() === "" || inputValue === "-" || inputValue === "." || inputValue === "-.") {
+      setInputValue("0");
+      onChange(0);
+      return;
+    }
+
+    const parsed = Number(inputValue);
+    if (Number.isFinite(parsed)) {
+      setInputValue(String(parsed));
+      onChange(parsed);
+    }
+  }
+
   return (
     <Field label={label}>
-      <Input type="number" step="any" value={value} onChange={(event) => onChange(Number(event.target.value))} />
+      <Input
+        type="text"
+        inputMode="decimal"
+        value={inputValue}
+        onFocus={() => {
+          setFocused(true);
+          if (Number(value) === 0 && inputValue === "0") setInputValue("");
+        }}
+        onBlur={handleBlur}
+        onChange={(event) => handleChange(event.target.value)}
+        placeholder="0"
+      />
     </Field>
   );
 }
