@@ -105,3 +105,31 @@ body {
     linear-gradient(90deg, color-mix(in oklch, var(--foreground) 7%, transparent) 1px, transparent 1px);
   background-size: 42px 42px;
 }
+
+.coming-soon-marquee {
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+.coming-soon-track {
+  animation: coming-soon-scroll 34s linear infinite;
+}
+
+.coming-soon-marquee:hover .coming-soon-track {
+  animation-play-state: paused;
+}
+
+@keyframes coming-soon-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coming-soon-track {
+    animation: none;
+  }
+}

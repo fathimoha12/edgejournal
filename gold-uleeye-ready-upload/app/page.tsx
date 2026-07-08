@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, BookOpenCheck, Check, LockKeyhole, MessageCircle, ShieldCheck } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpenCheck, Check, Clock, LockKeyhole, MessageCircle, Play, Scissors, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,39 @@ const features = [
 
 const plans = ["Unlimited manual trades", "Printable reports", "Dashboard and analytics", "Private cloud sync"];
 const whatsappLink = "https://wa.me/252633454984?text=Hello%2C%20I%20want%20Edge%20Journal%20pricing%20and%20setup.";
+
+const comingSoonAds = [
+  {
+    icon: Play,
+    title: "Chart Replay Backtesting",
+    description: "Replay market candles step by step and test your setup before live execution.",
+    metric: "Replay mode",
+  },
+  {
+    icon: Scissors,
+    title: "Slice The Market Move",
+    description: "Cut a full chart into clean segments: entry, confirmation, reaction, TP, and SL zones.",
+    metric: "Chart slicing",
+  },
+  {
+    icon: BarChart3,
+    title: "Setup Review Timeline",
+    description: "Break down each backtest into planned risk, 3RR target, session, and outcome.",
+    metric: "3RR review",
+  },
+  {
+    icon: Sparkles,
+    title: "Smart Practice Lab",
+    description: "Build a library of screenshots and replay examples for KIL, LQ, SMT, OF, and Model #1.",
+    metric: "Setup library",
+  },
+  {
+    icon: Clock,
+    title: "Session Replay",
+    description: "Test Asia, London, and New York behavior without mixing practice data with live trades.",
+    metric: "Session focus",
+  },
+];
 
 export default function LandingPage() {
   return (
@@ -133,6 +166,61 @@ export default function LandingPage() {
               <div className="mt-4">
                 <EquityCurveChart data={equityCurve} />
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y bg-card/35 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div className="max-w-3xl">
+              <Badge variant="secondary" className="mb-4">Ads coming soon</Badge>
+              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">A TradeView-style backtesting lab is coming.</h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Soon you will be able to replay candles, slice chart moves into clean review sections, and build a stronger backtesting routine inside Edge Journal.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="w-fit">
+              <Link href="/login">
+                Join early
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="coming-soon-marquee overflow-hidden">
+            <div className="coming-soon-track flex w-max gap-4">
+              {[...comingSoonAds, ...comingSoonAds].map((item, index) => (
+                <div key={`${item.title}-${index}`} className="w-[310px] shrink-0 rounded-lg border bg-background/80 p-4 shadow-xl backdrop-blur sm:w-[360px]">
+                  <div className="mb-4 overflow-hidden rounded-md border bg-black p-3">
+                    <div className="relative h-40">
+                      <div className="absolute inset-x-2 top-6 h-px bg-white/15" />
+                      <div className="absolute inset-x-2 top-20 h-px bg-white/15" />
+                      <div className="absolute inset-x-2 bottom-6 h-px bg-white/15" />
+                      <div className="absolute left-6 top-12 h-20 w-2 rounded-full bg-primary" />
+                      <div className="absolute left-14 top-8 h-28 w-2 rounded-full bg-white" />
+                      <div className="absolute left-24 top-16 h-16 w-2 rounded-full bg-primary" />
+                      <div className="absolute left-36 top-6 h-28 w-2 rounded-full bg-primary" />
+                      <div className="absolute left-48 top-12 h-20 w-2 rounded-full bg-white" />
+                      <div className="absolute left-60 top-4 h-32 w-2 rounded-full bg-primary" />
+                      <div className="absolute bottom-8 left-5 right-5 h-20 rounded-md border border-primary/50 bg-primary/15" />
+                      <div className="absolute right-4 top-4 rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
+                        {item.metric}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+                      <item.icon className="size-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{item.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
