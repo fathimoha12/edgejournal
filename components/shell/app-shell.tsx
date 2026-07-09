@@ -7,6 +7,7 @@ import {
   BookOpenCheck,
   FlaskConical,
   Gift,
+  GraduationCap,
   ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Trade Journal", href: "/journal", icon: BookOpenCheck },
+  { name: "Lessons", href: "/lessons", icon: GraduationCap },
   { name: "Backtesting", href: "/backtesting", icon: FlaskConical },
   { name: "Demo Challenge", href: "/demo-challenge", icon: Gift },
   { name: "Funded", href: "/funded-challenge", icon: Trophy },
