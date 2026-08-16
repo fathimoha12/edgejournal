@@ -9,7 +9,11 @@ import {
   Database,
   FastForward,
   FlaskConical,
+<<<<<<< HEAD
   GraduationCap,
+=======
+  Gift,
+>>>>>>> parent of cf23c30 (lesson)
   ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -28,9 +32,12 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Trade Journal", href: "/journal", icon: BookOpenCheck },
+<<<<<<< HEAD
   { name: "Open Positions", href: "/open-positions", icon: CircleDot },
   { name: "System", href: "/system", icon: Database },
   { name: "Lessons", href: "/lessons", icon: GraduationCap },
+=======
+>>>>>>> parent of cf23c30 (lesson)
   { name: "Backtesting", href: "/backtesting", icon: FlaskConical },
   { name: "Forward Test", href: "/forward-testing", icon: FastForward },
   { name: "Funded Challenge", href: "/funded-challenge", icon: Trophy },
