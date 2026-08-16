@@ -61,7 +61,7 @@ export function AdminUserManager({ currentEmail }: { currentEmail: string }) {
           Owner access only
         </div>
         <CardTitle>User access</CardTitle>
-        <CardDescription>Create login accounts for traders. Public registration is hidden.</CardDescription>
+        <CardDescription>Create login accounts for traders manually. Public registration is also available from the login page.</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]" onSubmit={createUser}>

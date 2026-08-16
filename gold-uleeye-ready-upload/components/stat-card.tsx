@@ -16,13 +16,13 @@ export function StatCard({
   tone?: "neutral" | "positive" | "negative";
 }) {
   return (
-    <Card className="glass-panel min-w-0 overflow-hidden">
-      <CardContent className="p-5">
-        <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
-          <p className="min-w-0 truncate text-sm text-muted-foreground">{label}</p>
+    <Card className="glass-panel min-w-0">
+      <CardContent className="grid min-h-32 gap-4 p-5">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <p className="min-w-0 text-sm leading-5 text-muted-foreground">{label}</p>
           <div
             className={cn(
-              "flex size-9 items-center justify-center rounded-md border bg-background/55",
+              "flex size-9 shrink-0 items-center justify-center rounded-md border bg-background/55",
               tone === "positive" && "text-emerald-500",
               tone === "negative" && "text-red-500",
             )}
@@ -30,11 +30,11 @@ export function StatCard({
             <Icon className="size-4" />
           </div>
         </div>
-        <div className="flex min-w-0 items-end justify-between gap-3">
-          <p className="min-w-0 truncate text-2xl font-semibold tracking-tight">{value}</p>
+        <div className="grid min-w-0 gap-2 self-end">
+          <p className="max-w-full break-words text-2xl font-semibold leading-tight tracking-tight sm:text-[1.65rem]">{value}</p>
           <span
             className={cn(
-              "min-w-0 text-right text-xs font-medium",
+              "text-xs font-medium leading-4",
               tone === "positive" && "text-emerald-500",
               tone === "negative" && "text-red-500",
               tone === "neutral" && "text-muted-foreground",

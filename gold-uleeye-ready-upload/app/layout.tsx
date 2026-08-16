@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AppearanceProvider } from "@/components/appearance-provider";
 
 export const metadata: Metadata = {
-  title: "Edge Journal | Forex Trade Journal",
+  title: "TET Community | Forex Trade Journal",
   description: "A secure red and black forex journal for traders who want discipline, reports, and edge analytics.",
 };
 

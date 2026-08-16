@@ -1,4 +1,4 @@
-# Edge Journal
+# TET Community
 
 A premium manual Forex Trade Journal web app built with Next.js, TypeScript, Tailwind CSS, shadcn/ui-style components, Supabase, and Recharts.
 
@@ -33,9 +33,35 @@ Create `.env.local`:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
 
-Never store broker passwords, broker API secrets, or trading account credentials in this app. Edge Journal is only for manual forex journaling and trade analysis.
+Never store broker passwords, broker API secrets, or trading account credentials in this app. TET Community is only for manual forex journaling and trade analysis.
+
+`SUPABASE_SERVICE_ROLE_KEY` is required only for the admin center: listing users, creating users, and saving admin-managed course videos. Never expose this key in client-side code.
+
+## Public registration and email confirmation
+
+1. In Supabase, open **Authentication -> Providers -> Email**.
+2. Enable email signups.
+3. Enable email confirmation.
+4. In **Authentication -> URL Configuration**, set your Site URL to your deployed site, for example `https://your-site.vercel.app`.
+5. Add redirect URL: `https://your-site.vercel.app/login?confirmed=1`.
+6. In **Authentication -> Email Templates** or SMTP sender settings, set the sender/application name to `TET Community`.
+
+New public users can register from `/login`. They must confirm their email before signing in.
+
+For a custom confirmation template, set the **Confirm signup** subject to `Confirm your TET Community account` and use this confirmation link:
+
+```html
+<h2>Confirm your TET Community account</h2>
+<p>Click the button below to finish creating your account.</p>
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ .RedirectTo }}">
+    Confirm TET Community account
+  </a>
+</p>
+```
 
 ## Run locally
 
@@ -64,10 +90,10 @@ Vercel will give you a free `your-project.vercel.app` domain. You can keep using
 - `/journal` add/edit/delete trades with multi-strategy selection, default 3RR, calculated R-multiple, 3RR respected flag, screenshot upload/URL, strategy checklist points, overview modal, table, and filters
 - `/analytics` pair, strategy, session, result, mistakes, and emotion analysis
 - `/settings` profile, trading account settings, currency, and risk preferences
-- `/backtesting` backtesting workspace
-- `/demo-challenge` free trial / demo challenge workspace
-- `/funded-challenge` funded challenge workspace
-- `/account-challenge` account challenge workspace
+- `/backtesting` 100-trade backtesting workspace with table/gallery views, before/after screenshots, journey archive, and coaching notes
+- `/forward-testing` 10-trade forward testing journal with its own table/gallery data, before/after screenshots, and coaching board
+- `/funded-challenge` funded challenge workspace with separate phase data, table/gallery views, and before/after screenshots
+- `/account-challenge` account challenge workspace with separate phase data, table/gallery views, and before/after screenshots
 
 ## Personal trading system
 

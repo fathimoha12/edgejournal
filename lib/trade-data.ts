@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { results, sessions, strategies, tradingAreas, type Trade, type TradeResult, type TradeStrategy, type TradingArea } from "@/lib/types";
+import { accountPhases, brokerChoices, propFirms, results, sessions, strategies, tradingAreas, type Trade, type TradeResult, type TradeStrategy, type TradingArea } from "@/lib/types";
 
 export type TradeRow = {
   id: string;
@@ -19,19 +19,30 @@ export type TradeRow = {
   profit_loss: number | string;
   r_multiple: number | string;
   trade_date: string;
+  purging_time?: string | null;
   session: Trade["session"];
   strategy_names: string[] | null;
   area: string | null;
+  backtest_cycle?: string | null;
+  prop_firm_name?: string | null;
+  account_size?: number | string | null;
+  account_phase?: string | null;
+  broker_name?: string | null;
   strategy_points: string[] | null;
   emotion: string | null;
   mistake: string | null;
   notes: string | null;
   screenshot_url: string | null;
+  before_screenshot_url?: string | null;
+  after_screenshot_url?: string | null;
 };
 
 const startingEquity = 25000;
 const strategySet = new Set<string>(strategies);
 const areaSet = new Set<string>(tradingAreas);
+const propFirmSet = new Set<string>(propFirms);
+const brokerSet = new Set<string>(brokerChoices);
+const accountPhaseSet = new Set<string>(accountPhases);
 
 function asNumber(value: number | string) {
   return Number(value) || 0;
@@ -45,6 +56,26 @@ function groupPercent(count: number, total: number) {
   return total ? Math.round((count / total) * 100) : 0;
 }
 
+function buildPurgingTimeSummary(trades: Trade[]) {
+  const grouped = Object.values(
+    trades
+      .filter((trade) => trade.purgingTime && trade.result !== "Open")
+      .reduce<Record<string, { time: string; trades: number; pnl: number }>>((times, trade) => {
+        const hour = trade.purgingTime.slice(0, 2);
+        const time = `${hour}:00`;
+        times[time] ??= { time, trades: 0, pnl: 0 };
+        times[time].trades += 1;
+        times[time].pnl += trade.profitLoss;
+        return times;
+      }, {}),
+  );
+
+  return {
+    best: grouped.length ? grouped.slice().sort((a, b) => b.pnl - a.pnl)[0] : null,
+    worst: grouped.length ? grouped.slice().sort((a, b) => a.pnl - b.pnl)[0] : null,
+  };
+}
+
 export function rowToTrade(row: TradeRow): Trade {
   const strategyNames = (row.strategy_names ?? []).filter((strategy): strategy is TradeStrategy => strategySet.has(strategy));
   const area = areaSet.has(row.area ?? "") ? (row.area as TradingArea) : "Backtesting";
@@ -56,6 +87,11 @@ export function rowToTrade(row: TradeRow): Trade {
     strategy: strategyNames.length ? strategyNames : ["KIL"],
     strategyPoints: row.strategy_points ?? [],
     area,
+    backtestCycle: row.backtest_cycle || "Journey 1",
+    propFirmName: propFirmSet.has(row.prop_firm_name ?? "") ? (row.prop_firm_name as Trade["propFirmName"]) : "None",
+    accountSize: asNumber(row.account_size ?? 0),
+    accountPhase: accountPhaseSet.has(row.account_phase ?? "") ? (row.account_phase as Trade["accountPhase"]) : "Evaluation",
+    brokerName: brokerSet.has(row.broker_name ?? "") ? (row.broker_name as Trade["brokerName"]) : "None",
     session: row.session,
     entry: asNumber(row.entry),
     stopLoss: asNumber(row.stop_loss),
@@ -67,7 +103,10 @@ export function rowToTrade(row: TradeRow): Trade {
     profitLoss: asNumber(row.profit_loss),
     rMultiple: asNumber(row.r_multiple),
     date: row.trade_date,
+    purgingTime: row.purging_time?.slice(0, 5) ?? "",
     screenshotUrl: row.screenshot_url ?? "",
+    beforeScreenshotUrl: row.before_screenshot_url ?? "",
+    afterScreenshotUrl: row.after_screenshot_url ?? "",
     notes: row.notes ?? "",
     mistake: row.mistake ?? "None",
     emotion: row.emotion ?? "",
@@ -90,14 +129,22 @@ export function tradeToRow(trade: Trade, userId: string) {
     profit_loss: trade.profitLoss,
     r_multiple: trade.rMultiple,
     trade_date: trade.date,
+    purging_time: trade.purgingTime || null,
     session: trade.session,
     strategy_names: trade.strategy,
     area: trade.area,
+    backtest_cycle: trade.backtestCycle || "Journey 1",
+    prop_firm_name: trade.area === "Backtesting" ? null : trade.propFirmName || null,
+    account_size: trade.area === "Backtesting" ? null : trade.accountSize || null,
+    account_phase: trade.area === "Backtesting" ? null : trade.accountPhase || null,
+    broker_name: trade.area === "Backtesting" ? null : trade.brokerName || null,
     strategy_points: trade.strategyPoints ?? [],
     emotion: trade.emotion || null,
     mistake: trade.mistake || "None",
     notes: trade.notes || null,
     screenshot_url: trade.screenshotUrl || null,
+    before_screenshot_url: trade.beforeScreenshotUrl || null,
+    after_screenshot_url: trade.afterScreenshotUrl || null,
   };
 }
 
@@ -155,6 +202,7 @@ export function buildTradeAnalytics(trades: Trade[]) {
   const grossLoss = Math.abs(slLossTrades.reduce((sum, trade) => sum + trade.profitLoss, 0));
   const profits = tpProfitTrades.map((trade) => trade.profitLoss);
   const losses = slLossTrades.map((trade) => trade.profitLoss);
+  const purgingTimes = buildPurgingTimeSummary(closedTrades);
 
   const dashboardMetrics = {
     totalTrades: trades.length,
@@ -176,6 +224,8 @@ export function buildTradeAnalytics(trades: Trade[]) {
     biggestLoss: losses.length ? Math.min(...losses) : 0,
     averageProfit: average(profits),
     averageLoss: average(losses),
+    bestPurgingTime: purgingTimes.best,
+    worstPurgingTime: purgingTimes.worst,
   };
 
   const sessionTotals = sessions.map((session) => {

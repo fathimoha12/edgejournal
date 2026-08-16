@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
+import { FloatingMessage } from "@/components/floating-message";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { TradeTable } from "@/components/trade-table";
 import { trades as seedTrades } from "@/lib/mock-data";
 import { respectedThreeRR } from "@/lib/trade-rules";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { strategies, tradingAreas, type Trade, type TradeStrategy, type TradingArea } from "@/lib/types";
+import { accountPhases, brokerChoices, propFirms, strategies, tradingAreas, type Trade, type TradeStrategy, type TradingArea } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
 const initialFilters: TradeFilters = {
@@ -39,18 +40,30 @@ type TradeRow = {
   profit_loss: number | string;
   r_multiple: number | string;
   trade_date: string;
+  purging_time?: string | null;
   session: Trade["session"];
   strategy_names: string[] | null;
   area: string | null;
+  backtest_cycle?: string | null;
+  prop_firm_name?: string | null;
+  account_size?: number | string | null;
+  account_phase?: string | null;
+  broker_name?: string | null;
   strategy_points: string[] | null;
   emotion: string | null;
   mistake: string | null;
   notes: string | null;
   screenshot_url: string | null;
+  before_screenshot_url?: string | null;
+  after_screenshot_url?: string | null;
 };
 
 const strategySet = new Set<string>(strategies);
 const areaSet = new Set<string>(tradingAreas);
+const propFirmSet = new Set<string>(propFirms);
+const brokerSet = new Set<string>(brokerChoices);
+const accountPhaseSet = new Set<string>(accountPhases);
+const dailyDisciplineAreas = new Set<TradingArea>(["Forward Testing", "Funded Challenge", "Account Challenge"]);
 
 function asNumber(value: number | string) {
   return Number(value) || 0;
@@ -67,6 +80,11 @@ function rowToTrade(row: TradeRow): Trade {
     strategy: strategyNames.length ? strategyNames : ["KIL"],
     strategyPoints: row.strategy_points ?? [],
     area,
+    backtestCycle: row.backtest_cycle || "Journey 1",
+    propFirmName: propFirmSet.has(row.prop_firm_name ?? "") ? (row.prop_firm_name as Trade["propFirmName"]) : "None",
+    accountSize: asNumber(row.account_size ?? 0),
+    accountPhase: accountPhaseSet.has(row.account_phase ?? "") ? (row.account_phase as Trade["accountPhase"]) : "Evaluation",
+    brokerName: brokerSet.has(row.broker_name ?? "") ? (row.broker_name as Trade["brokerName"]) : "None",
     session: row.session,
     entry: asNumber(row.entry),
     stopLoss: asNumber(row.stop_loss),
@@ -78,7 +96,10 @@ function rowToTrade(row: TradeRow): Trade {
     profitLoss: asNumber(row.profit_loss),
     rMultiple: asNumber(row.r_multiple),
     date: row.trade_date,
+    purgingTime: row.purging_time?.slice(0, 5) ?? "",
     screenshotUrl: row.screenshot_url ?? "",
+    beforeScreenshotUrl: row.before_screenshot_url ?? "",
+    afterScreenshotUrl: row.after_screenshot_url ?? "",
     notes: row.notes ?? "",
     mistake: row.mistake ?? "None",
     emotion: row.emotion ?? "",
@@ -101,14 +122,22 @@ function tradeToRow(trade: Trade, userId: string) {
     profit_loss: trade.profitLoss,
     r_multiple: trade.rMultiple,
     trade_date: trade.date,
+    purging_time: trade.purgingTime || null,
     session: trade.session,
     strategy_names: trade.strategy,
     area: trade.area,
+    backtest_cycle: trade.backtestCycle || "Journey 1",
+    prop_firm_name: trade.area === "Backtesting" ? null : trade.propFirmName || null,
+    account_size: trade.area === "Backtesting" ? null : trade.accountSize || null,
+    account_phase: trade.area === "Backtesting" ? null : trade.accountPhase || null,
+    broker_name: trade.area === "Backtesting" ? null : trade.brokerName || null,
     strategy_points: trade.strategyPoints ?? [],
     emotion: trade.emotion || null,
     mistake: trade.mistake || "None",
     notes: trade.notes || null,
     screenshot_url: trade.screenshotUrl || null,
+    before_screenshot_url: trade.beforeScreenshotUrl || null,
+    after_screenshot_url: trade.afterScreenshotUrl || null,
   };
 }
 
@@ -126,6 +155,12 @@ export function JournalWorkspace() {
   const [busy, setBusy] = React.useState(false);
   const [accountEmail, setAccountEmail] = React.useState("");
   const [databaseMessage, setDatabaseMessage] = React.useState("");
+  const [messageTone, setMessageTone] = React.useState<"danger" | "success" | "neutral">("danger");
+
+  function showMessage(message: string, tone: "danger" | "success" | "neutral" = "danger") {
+    setDatabaseMessage(message);
+    setMessageTone(tone);
+  }
 
   const loadTrades = React.useCallback(async () => {
     setLoaded(false);
@@ -147,7 +182,7 @@ export function JournalWorkspace() {
       setTrades(((response.data ?? []) as TradeRow[]).map(rowToTrade));
     } catch (error) {
       setTrades([]);
-      setDatabaseMessage(getErrorMessage(error));
+      showMessage(getErrorMessage(error));
     } finally {
       setLoaded(true);
     }
@@ -175,7 +210,36 @@ export function JournalWorkspace() {
     try {
       const { supabase, user } = await getUserForWrite();
       const exists = trades.some((item) => item.id === trade.id);
-      const payload = tradeToRow(trade, user.id);
+      const existingTrade = trades.find((item) => item.id === trade.id);
+      const targetCycle = trade.backtestCycle || existingTrade?.backtestCycle || "Journey 1";
+      const backtestingTrades = trades.filter((item) => item.area === "Backtesting" && (item.backtestCycle || "Journey 1") === targetCycle).length;
+      const sameDayTrades = trades.filter(
+        (item) =>
+          item.id !== trade.id &&
+          item.area === trade.area &&
+          item.date === trade.date &&
+          (item.backtestCycle || "Journey 1") === targetCycle,
+      );
+
+      if (trade.area === "Backtesting" && (!exists || existingTrade?.area !== "Backtesting") && backtestingTrades >= 100) {
+        throw new Error(`${targetCycle} limit reached. You can save only 100 backtesting trades in one journey.`);
+      }
+
+      if (exists && existingTrade && existingTrade.area !== trade.area) {
+        throw new Error("Trade hore loo diwaan geliyay section-kiisa lama beddeli karo. Haddii uu qalad yahay, delete garee kadib trade cusub ku geli section sax ah.");
+      }
+
+      if (dailyDisciplineAreas.has(trade.area)) {
+        if (sameDayTrades.some((item) => item.session === trade.session)) {
+          throw new Error(`Session-kan (${trade.session}) maanta trade hore ayaa laga qaatay. 3-da trade waxay u kala baxayaan Asia, London, iyo New York.`);
+        }
+
+        if (sameDayTrades.length >= 3) {
+          throw new Error("Waxaad samaynaysaa over trading. Maanta 3 trade ayaa kuu dhammaatay. Orod oo yara seexo ama suuqa u yara bax si naftaadu u soo yara dagto.");
+        }
+      }
+
+      const payload = tradeToRow({ ...trade, backtestCycle: targetCycle }, user.id);
 
       const response = exists
         ? await supabase.from("trades").update(payload).eq("id", trade.id).select("*").single()
@@ -186,8 +250,9 @@ export function JournalWorkspace() {
       const savedTrade = rowToTrade(response.data as TradeRow);
       setTrades((current) => (exists ? current.map((item) => (item.id === savedTrade.id ? savedTrade : item)) : [savedTrade, ...current]));
       setSelectedTrade(null);
+      showMessage(exists ? "Trade-ka waa la update gareeyay." : "Trade-ka waa la diwaan geliyay.", "success");
     } catch (error) {
-      setDatabaseMessage(getErrorMessage(error));
+      showMessage(getErrorMessage(error));
       throw error;
     } finally {
       setBusy(false);
@@ -206,8 +271,9 @@ export function JournalWorkspace() {
       setTrades((current) => current.filter((trade) => trade.id !== id));
       if (overviewTrade?.id === id) setOverviewTrade(null);
       if (selectedTrade?.id === id) setSelectedTrade(null);
+      showMessage("Trade-ka waa la delete gareeyay.", "success");
     } catch (error) {
-      setDatabaseMessage(getErrorMessage(error));
+      showMessage(getErrorMessage(error));
     } finally {
       setBusy(false);
     }
@@ -225,8 +291,9 @@ export function JournalWorkspace() {
 
       const insertedTrades = ((response.data ?? []) as TradeRow[]).map(rowToTrade);
       setTrades((current) => [...insertedTrades, ...current]);
+      showMessage("Sample data waa la geliyay.", "success");
     } catch (error) {
-      setDatabaseMessage(getErrorMessage(error));
+      showMessage(getErrorMessage(error));
     } finally {
       setBusy(false);
     }
@@ -244,8 +311,9 @@ export function JournalWorkspace() {
       setTrades([]);
       setSelectedTrade(null);
       setOverviewTrade(null);
+      showMessage("Trades-ka waa la nadiifiyay.", "success");
     } catch (error) {
-      setDatabaseMessage(getErrorMessage(error));
+      showMessage(getErrorMessage(error));
     } finally {
       setBusy(false);
     }
@@ -262,6 +330,7 @@ export function JournalWorkspace() {
       trade.mistake,
       ...(trade.strategyPoints ?? []),
       trade.date,
+      trade.purgingTime,
     ]
       .join(" ")
       .toLowerCase();
@@ -279,50 +348,12 @@ export function JournalWorkspace() {
 
   return (
     <div className="grid gap-5">
+      <FloatingMessage message={databaseMessage} tone={messageTone} onClose={() => setDatabaseMessage("")} />
       <TradeForm selectedTrade={selectedTrade} onCancel={() => setSelectedTrade(null)} onSave={saveTradeToSql} />
-
       <Card className="glass-panel">
-        <CardHeader>
-          <CardTitle>Trade list</CardTitle>
-          <CardDescription>
-            This journal is saved to your private account workspace{accountEmail ? `: ${accountEmail}` : ""}. Browser storage is not used for trades.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          {databaseMessage ? (
-            <div className="flex gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" />
-              <p>{databaseMessage}</p>
-            </div>
-          ) : null}
-
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={loadSampleDataToSql}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              Load sample data
-            </Button>
-            <Button type="button" variant="destructive" size="sm" disabled={busy} onClick={clearAllTradesFromSql}>
-              Clear all trades
-            </Button>
-          </div>
-          <FilterBar filters={filters} onChange={setFilters} />
-          {!loaded ? (
-            <div className="grid rounded-lg border border-dashed bg-background/35 p-8 text-center text-sm text-muted-foreground">
-              <span className="inline-flex items-center justify-center gap-2">
-                <Loader2 className="size-4 animate-spin" />
-                Loading trades...
-              </span>
-            </div>
-          ) : filteredTrades.length ? (
-            <TradeTable trades={filteredTrades} onView={setOverviewTrade} onEdit={setSelectedTrade} onDelete={deleteTradeFromSql} />
-          ) : (
-            <div className="rounded-lg border border-dashed bg-background/35 p-8 text-center">
-              <p className="font-medium">Wali trade lama gelin.</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Add a new trade with the form above, or use Load sample data if you want a quick example.
-              </p>
-            </div>
-          )}
+        <CardContent className="py-4 text-sm text-muted-foreground">
+          Trade Journal waa meesha trade cusub laga geliyo oo keliya. Trade list, edit, delete, iyo open positions waxaad ka eegaysaa qaybaha Backtesting, Forward, Funded, Account, ama Open Positions.
+          {accountEmail ? ` Account: ${accountEmail}` : ""}
         </CardContent>
       </Card>
 
@@ -365,6 +396,7 @@ function TradeOverview({ trade, onClose }: { trade: Trade; onClose: () => void }
               <OverviewMetric label="Entry" value={String(trade.entry)} />
               <OverviewMetric label="Stop Loss" value={String(trade.stopLoss)} />
               <OverviewMetric label="Take Profit" value={String(trade.takeProfit)} />
+              <OverviewMetric label="Purging time" value={trade.purgingTime || "-"} />
               <OverviewMetric label="Risk" value={formatCurrency(trade.riskAmount)} />
               <OverviewMetric label="Reward" value={formatCurrency(trade.rewardAmount)} />
               <OverviewMetric label="R:R" value={trade.rr.toFixed(2)} />

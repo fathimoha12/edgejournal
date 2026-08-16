@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
   BookOpenCheck,
+  FastForward,
   FlaskConical,
-  Gift,
   GraduationCap,
   ImageIcon,
   LayoutDashboard,
@@ -28,9 +28,9 @@ const navigation = [
   { name: "Trade Journal", href: "/journal", icon: BookOpenCheck },
   { name: "Lessons", href: "/lessons", icon: GraduationCap },
   { name: "Backtesting", href: "/backtesting", icon: FlaskConical },
-  { name: "Demo Challenge", href: "/demo-challenge", icon: Gift },
-  { name: "Funded", href: "/funded-challenge", icon: Trophy },
-  { name: "Account", href: "/account-challenge", icon: WalletCards },
+  { name: "Forward Test", href: "/forward-testing", icon: FastForward },
+  { name: "Funded Challenge", href: "/funded-challenge", icon: Trophy },
+  { name: "Account Challenge", href: "/account-challenge", icon: WalletCards },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Posters", href: "/posters", icon: ImageIcon },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -63,11 +63,11 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r bg-card/70 p-4 backdrop-blur-xl lg:block">
-        <Link href="/" className="mb-8 flex items-center gap-3 rounded-md px-2 py-2">
-          <BrandMark />
+        <Link href="/" className="mb-8 flex items-center gap-3 rounded-md px-1 py-2">
+          <BrandMark className="size-16 shrink-0" />
           <div>
-            <p className="font-semibold tracking-tight">Edge Journal</p>
-            <p className="text-xs text-muted-foreground">Redline trading OS</p>
+            <p className="text-base font-semibold tracking-tight">TET Community</p>
+            <p className="text-xs text-muted-foreground">Triple Edge Trader OS</p>
           </div>
         </Link>
 

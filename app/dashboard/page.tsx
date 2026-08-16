@@ -7,6 +7,7 @@ import {
   BarChart3,
   CalendarDays,
   CircleDot,
+  Clock,
   LineChart,
   Percent,
   Scale,
@@ -26,6 +27,7 @@ import { StatCard } from "@/components/stat-card";
 import { StrategyAnalyticsTable } from "@/components/strategy-analytics-table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAppLanguage } from "@/components/language-settings";
 import { buildTradeAnalytics, useSupabaseTrades } from "@/lib/trade-data";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
@@ -36,6 +38,8 @@ const sessionLabels = {
 };
 
 export default function DashboardPage() {
+  const language = useAppLanguage();
+  const so = language === "so";
   const { trades, accountEmail, loading, error } = useSupabaseTrades();
   const {
     dashboardMetrics,
@@ -79,16 +83,18 @@ export default function DashboardPage() {
     { label: "Biggest Loss", value: formatCurrency(dashboardMetrics.biggestLoss), change: "Worst SL trade", icon: BadgeDollarSign, tone: "negative" as const },
     { label: "Average Profit", value: formatCurrency(dashboardMetrics.averageProfit), change: "TP trades only", icon: TrendingUp, tone: "positive" as const },
     { label: "Average Loss", value: formatCurrency(dashboardMetrics.averageLoss), change: "SL trades only", icon: TrendingDown, tone: "negative" as const },
+    { label: "Best Purging Time", value: dashboardMetrics.bestPurgingTime?.time ?? "-", change: dashboardMetrics.bestPurgingTime ? `${formatCurrency(dashboardMetrics.bestPurgingTime.pnl)} net` : "No time data", icon: Clock, tone: "positive" as const },
+    { label: "Worst Purging Time", value: dashboardMetrics.worstPurgingTime?.time ?? "-", change: dashboardMetrics.worstPurgingTime ? `${formatCurrency(dashboardMetrics.worstPurgingTime.pnl)} net` : "No time data", icon: Clock, tone: "negative" as const },
   ];
 
   return (
-    <AppShell title="Dashboard" subtitle="3RR objective, session totals, strategy edge, and trade quality metrics.">
+    <AppShell title="Dashboard" subtitle={so ? "3RR objective, session totals, strategy edge, iyo tayada trades-ka." : "3RR objective, session totals, strategy edge, and trade quality metrics."}>
       <div className="grid min-w-0 gap-6">
         <DataStatus loading={loading} error={error} accountEmail={accountEmail} trades={trades.length} />
 
         <section className="grid min-w-0 gap-4">
-          <SectionHeading title="General totals" description="Core journal health across TP, SL, BE, Open, P/L, win rate, loss rate, R:R, and profit factor." />
-          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <SectionHeading title="General totals" description={so ? "Soo koobid guud: TP, SL, BE, Open, P/L, win rate, loss rate, R:R, iyo profit factor." : "Core journal health across TP, SL, BE, Open, P/L, win rate, loss rate, R:R, and profit factor."} />
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
             {generalStats.map((stat) => (
               <StatCard key={stat.label} {...stat} />
             ))}
@@ -96,7 +102,7 @@ export default function DashboardPage() {
         </section>
 
         <section className="grid min-w-0 gap-4">
-          <SectionHeading title="Session totals" description="Asia, London, and New York performance with TP/SL and win-rate clarity." />
+          <SectionHeading title="Session totals" description={so ? "Asia, London, iyo New York: TP/SL iyo win-rate si cad." : "Asia, London, and New York performance with TP/SL and win-rate clarity."} />
           <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {sessionTotals.flatMap((item) => [
               <StatCard key={`${item.session}-trades`} label={`Total ${sessionLabels[item.session]} Trades`} value={`${item.trades}`} change={formatCurrency(item.pnl)} icon={Sigma} />,
@@ -108,7 +114,7 @@ export default function DashboardPage() {
         </section>
 
         <section className="grid min-w-0 gap-4">
-          <SectionHeading title="Price and risk statistics" description="Entry, stop, target, profit, and loss statistics for your manual journal." />
+          <SectionHeading title="Price and risk statistics" description={so ? "Entry, stop, target, profit, iyo loss statistics ee journal-kaaga." : "Entry, stop, target, profit, and loss statistics for your manual journal."} />
           <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {priceStats.map((stat) => (
               <StatCard key={stat.label} {...stat} />

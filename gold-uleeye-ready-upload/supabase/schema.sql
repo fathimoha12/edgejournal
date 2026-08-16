@@ -72,17 +72,26 @@ create table if not exists public.trades (
   profit_loss numeric(14, 2) not null,
   r_multiple numeric(8, 3) not null,
   trade_date date not null,
+  purging_time time,
   session public.trading_session not null,
   strategy_names text[] not null default '{}',
   area text not null default 'Backtesting',
+  backtest_cycle text not null default 'Journey 1',
   strategy_points text[] not null default '{}',
   emotion text,
   mistake text,
   notes text,
   screenshot_url text,
+  before_screenshot_url text,
+  after_screenshot_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.trades add column if not exists before_screenshot_url text;
+alter table public.trades add column if not exists after_screenshot_url text;
+alter table public.trades add column if not exists backtest_cycle text not null default 'Journey 1';
+alter table public.trades add column if not exists purging_time time;
 
 create table if not exists public.screenshots (
   id uuid primary key default gen_random_uuid(),
@@ -103,6 +112,59 @@ create table if not exists public.journal_notes (
   note_date date not null default current_date,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table if not exists public.course_lessons (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  module text not null default 'Course',
+  youtube_url text not null,
+  youtube_id text not null,
+  description text,
+  duration_minutes integer,
+  lesson_order integer not null default 1,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.course_playlists (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  category text not null default 'Course playlist',
+  youtube_url text not null,
+  playlist_id text not null,
+  first_video_id text,
+  playlist_order integer not null default 1,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, playlist_id)
+);
+
+create table if not exists public.admin_course_playlists (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  category text not null default 'Course playlist',
+  youtube_url text not null,
+  playlist_id text not null unique,
+  first_video_id text,
+  playlist_order integer not null default 1,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.admin_course_videos (
+  id uuid primary key default gen_random_uuid(),
+  playlist_id text not null references public.admin_course_playlists(playlist_id) on delete cascade,
+  video_id text not null,
+  title text not null,
+  module text not null default 'Course video',
+  duration text not null default '0:00',
+  video_order integer not null default 1,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (playlist_id, video_id)
 );
 
 create or replace function public.set_updated_at()
@@ -135,36 +197,167 @@ create trigger journal_notes_updated_at
 before update on public.journal_notes
 for each row execute function public.set_updated_at();
 
+drop trigger if exists course_lessons_updated_at on public.course_lessons;
+create trigger course_lessons_updated_at
+before update on public.course_lessons
+for each row execute function public.set_updated_at();
+
+drop trigger if exists course_playlists_updated_at on public.course_playlists;
+create trigger course_playlists_updated_at
+before update on public.course_playlists
+for each row execute function public.set_updated_at();
+
+drop trigger if exists admin_course_playlists_updated_at on public.admin_course_playlists;
+create trigger admin_course_playlists_updated_at
+before update on public.admin_course_playlists
+for each row execute function public.set_updated_at();
+
+drop trigger if exists admin_course_videos_updated_at on public.admin_course_videos;
+create trigger admin_course_videos_updated_at
+before update on public.admin_course_videos
+for each row execute function public.set_updated_at();
+
+create or replace function public.limit_backtesting_trades()
+returns trigger
+language plpgsql
+as $$
+declare
+  current_section_trades integer;
+  max_section_trades integer;
+begin
+  max_section_trades := case
+    when new.area = 'Backtesting' then 100
+    when new.area = 'Forward Testing' then 10
+    when new.area = 'Funded Challenge' then 100
+    when new.area = 'Account Challenge' then 100
+    else null
+  end;
+
+  if max_section_trades is not null then
+    new.backtest_cycle = coalesce(nullif(new.backtest_cycle, ''), 'Journey 1');
+
+    select count(*) into current_section_trades
+    from public.trades
+    where user_id = new.user_id
+      and area = new.area
+      and coalesce(nullif(backtest_cycle, ''), 'Journey 1') = new.backtest_cycle
+      and id <> new.id;
+
+    if current_section_trades >= max_section_trades then
+      raise exception '% journey limit reached. Maximum % trades allowed per journey.', new.area, max_section_trades;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trades_limit_backtesting on public.trades;
+create trigger trades_limit_backtesting
+before insert or update on public.trades
+for each row execute function public.limit_backtesting_trades();
+
+create or replace function public.enforce_live_daily_trade_discipline()
+returns trigger
+language plpgsql
+as $$
+declare
+  same_day_trades integer;
+  same_session_trades integer;
+begin
+  if new.area in ('Forward Testing', 'Funded Challenge', 'Account Challenge') then
+    new.backtest_cycle = coalesce(nullif(new.backtest_cycle, ''), 'Journey 1');
+
+    select count(*) into same_day_trades
+    from public.trades
+    where user_id = new.user_id
+      and area = new.area
+      and coalesce(nullif(backtest_cycle, ''), 'Journey 1') = new.backtest_cycle
+      and trade_date = new.trade_date
+      and id <> new.id;
+
+    if same_day_trades >= 3 then
+      raise exception 'Over trading blocked. Maximum 3 trades per day for %, divided across Asia, London, and New York.', new.area;
+    end if;
+
+    select count(*) into same_session_trades
+    from public.trades
+    where user_id = new.user_id
+      and area = new.area
+      and coalesce(nullif(backtest_cycle, ''), 'Journey 1') = new.backtest_cycle
+      and trade_date = new.trade_date
+      and session = new.session
+      and id <> new.id;
+
+    if same_session_trades > 0 then
+      raise exception 'Session discipline blocked. Only one % trade is allowed per day in the % session.', new.area, new.session;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trades_live_daily_trade_discipline on public.trades;
+create trigger trades_live_daily_trade_discipline
+before insert or update on public.trades
+for each row execute function public.enforce_live_daily_trade_discipline();
+
 alter table public.profiles enable row level security;
 alter table public.trading_accounts enable row level security;
 alter table public.strategies enable row level security;
 alter table public.trades enable row level security;
 alter table public.screenshots enable row level security;
 alter table public.journal_notes enable row level security;
+alter table public.course_lessons enable row level security;
+alter table public.course_playlists enable row level security;
+alter table public.admin_course_playlists enable row level security;
+alter table public.admin_course_videos enable row level security;
 
+drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own" on public.profiles
 for select using (auth.uid() = id);
+drop policy if exists "profiles_insert_own" on public.profiles;
 create policy "profiles_insert_own" on public.profiles
 for insert with check (auth.uid() = id);
+drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles
 for update using (auth.uid() = id) with check (auth.uid() = id);
 
+drop policy if exists "trading_accounts_own" on public.trading_accounts;
 create policy "trading_accounts_own" on public.trading_accounts
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "strategies_own" on public.strategies;
 create policy "strategies_own" on public.strategies
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "trades_own" on public.trades;
 create policy "trades_own" on public.trades
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "screenshots_own" on public.screenshots;
 create policy "screenshots_own" on public.screenshots
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "journal_notes_own" on public.journal_notes;
 create policy "journal_notes_own" on public.journal_notes
+for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "course_lessons_own" on public.course_lessons;
+create policy "course_lessons_own" on public.course_lessons
+for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "course_playlists_own" on public.course_playlists;
+create policy "course_playlists_own" on public.course_playlists
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create index if not exists trades_user_date_idx on public.trades(user_id, trade_date desc);
 create index if not exists trades_user_pair_idx on public.trades(user_id, pair);
 create index if not exists trades_user_strategy_idx on public.trades(user_id, strategy_id);
+create index if not exists trades_user_backtest_cycle_idx on public.trades(user_id, area, backtest_cycle);
 create index if not exists journal_notes_user_date_idx on public.journal_notes(user_id, note_date desc);
+create index if not exists course_lessons_user_order_idx on public.course_lessons(user_id, lesson_order, created_at);
+create index if not exists course_playlists_user_order_idx on public.course_playlists(user_id, playlist_order, created_at);
+create index if not exists admin_course_playlists_order_idx on public.admin_course_playlists(playlist_order, created_at);
+create index if not exists admin_course_videos_playlist_order_idx on public.admin_course_videos(playlist_id, video_order, created_at);

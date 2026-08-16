@@ -42,6 +42,7 @@ export function TradeTable({
             <TableCell>
               <div className="font-medium">{trade.id}</div>
               <div className="text-xs text-muted-foreground">{trade.date}</div>
+              <div className="text-xs text-muted-foreground">{trade.purgingTime || "No time"}</div>
             </TableCell>
             <TableCell className="font-medium">{trade.pair}</TableCell>
             <TableCell>{trade.direction}</TableCell>

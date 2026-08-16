@@ -37,7 +37,7 @@ function titleFromFile(file: string) {
 
 export default function PostersPage() {
   return (
-    <AppShell title="Social Posters" subtitle="Download-ready Edge Journal social media ads with sample trading metrics.">
+    <AppShell title="Social Posters" subtitle="Download-ready TET Community social media ads with sample trading metrics.">
       <div className="grid gap-5">
         <Card className="glass-panel">
           <CardHeader>
@@ -45,7 +45,7 @@ export default function PostersPage() {
               <ImageIcon className="size-4" />
               20 ready-to-post creatives
             </div>
-            <CardTitle>Edge Journal marketing poster pack</CardTitle>
+            <CardTitle>TET Community marketing poster pack</CardTitle>
             <CardDescription>
               Use these 1080x1350 PNG posters for Instagram, Facebook, WhatsApp status, Telegram, and other social channels.
             </CardDescription>

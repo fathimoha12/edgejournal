@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Loader2, Plus, Save } from "lucide-react";
+import { AlertCircle, Check, Loader2, Plus, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,33 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { calculateRMultiple, respectedThreeRR } from "@/lib/trade-rules";
-import type { Trade, TradeStrategy } from "@/lib/types";
-import { directions, results, sessions, strategies, tradingAreas } from "@/lib/types";
+import type { PropFirmName, Trade, TradeStrategy } from "@/lib/types";
+import { accountPhases, brokerChoices, directions, propFirms, results, sessions, strategies, tradingAreas } from "@/lib/types";
+
+const propFirmRules: Record<PropFirmName, string[]> = {
+  None: ["No prop firm selected. Use this for personal accounts or pure forward testing."],
+  FTMO: ["Common rules: daily loss limit, max overall loss, profit target, minimum trading days, and no prohibited trading behavior."],
+  The5ers: ["Common rules: max drawdown, daily pause discipline, consistency, and news/weekend rules depending on program."],
+  "Funding Pips": ["Common rules: daily drawdown, overall drawdown, profit target, minimum days, and consistency controls."],
+  FundedNext: ["Common rules: daily loss, overall loss, profit split phase, consistency, and news restrictions by account type."],
+  "Alpha Capital": ["Common rules: max daily loss, max loss, target, minimum trading days, and risk limits."],
+  MyFundedFX: ["Common rules: max daily drawdown, max total drawdown, target, and payout/account scaling conditions."],
+};
+
+const brokerNotes: Record<string, string[]> = {
+  None: ["Broker not selected. Never store broker password or login credentials."],
+  "IC Markets": ["Track spread, commission, slippage, server time, symbol suffix, leverage, and execution quality."],
+  Pepperstone: ["Track spread, commission, slippage, platform type, leverage, and rollover/session execution."],
+  OANDA: ["Track spread model, unit sizing, margin, execution, and session pricing behavior."],
+  Eightcap: ["Track account currency, commission, spread, leverage, and symbol contract details."],
+  XM: ["Track spread type, leverage, swap settings, bonus impact, and execution quality."],
+  Exness: ["Track leverage mode, spread, commission if any, swap settings, and execution stability."],
+  Deriv: ["Track synthetic/forex account type, contract specs, spreads, and session behavior."],
+};
+
+function currentTimeValue() {
+  return new Date().toTimeString().slice(0, 5);
+}
 
 const emptyTrade: Trade = {
   id: "",
@@ -19,6 +44,11 @@ const emptyTrade: Trade = {
   strategy: ["KIL"],
   strategyPoints: ["Liquidity sweep", "Displacement", "3RR target clear"],
   area: "Backtesting",
+  backtestCycle: "Journey 1",
+  propFirmName: "None",
+  accountSize: 0,
+  accountPhase: "Evaluation",
+  brokerName: "None",
   session: "London",
   entry: 0,
   stopLoss: 0,
@@ -30,7 +60,10 @@ const emptyTrade: Trade = {
   profitLoss: 0,
   rMultiple: 0,
   date: new Date().toISOString().slice(0, 10),
+  purgingTime: currentTimeValue(),
   screenshotUrl: "",
+  beforeScreenshotUrl: "",
+  afterScreenshotUrl: "",
   notes: "",
   mistake: "None",
   emotion: "",
@@ -38,27 +71,46 @@ const emptyTrade: Trade = {
 
 export function TradeForm({
   selectedTrade,
+  initialArea,
+  lockArea = false,
   onSave,
   onCancel,
 }: {
   selectedTrade?: Trade | null;
+  initialArea?: Trade["area"];
+  lockArea?: boolean;
   onSave: (trade: Trade) => void | Promise<void>;
   onCancel: () => void;
 }) {
-  const [trade, setTrade] = React.useState<Trade>(selectedTrade ?? emptyTrade);
+  const baseEmptyTrade = React.useMemo(() => ({ ...emptyTrade, area: initialArea ?? emptyTrade.area, date: new Date().toISOString().slice(0, 10), purgingTime: currentTimeValue() }), [initialArea]);
+  const [trade, setTrade] = React.useState<Trade>(selectedTrade ?? baseEmptyTrade);
   const [submitting, setSubmitting] = React.useState(false);
+  const [formMessage, setFormMessage] = React.useState("");
+  const [reviewTrade, setReviewTrade] = React.useState<Trade | null>(null);
 
   React.useEffect(() => {
-    setTrade(selectedTrade ?? emptyTrade);
-  }, [selectedTrade]);
+    setTrade(selectedTrade ?? baseEmptyTrade);
+  }, [baseEmptyTrade, selectedTrade]);
 
   const rMultiple = calculateRMultiple(trade);
   const respectedTarget = respectedThreeRR(trade);
   const strategyPointsText = (trade.strategyPoints ?? []).join("\n");
+  const usesBeforeAfterScreenshots = tradingAreas.includes(trade.area);
+  const isClosedResult = trade.result !== "Open";
+  const needsAccountProfile = trade.area !== "Backtesting";
+  const selectedFirmRules = propFirmRules[trade.propFirmName ?? "None"] ?? propFirmRules.None;
+  const selectedBrokerNotes = brokerNotes[trade.brokerName ?? "None"] ?? brokerNotes.None;
 
   const update = <K extends keyof Trade>(key: K, value: Trade[K]) => {
     setTrade((current) => {
       const next = { ...current, [key]: value };
+
+      if (key === "area" && value === "Backtesting") {
+        next.propFirmName = "None";
+        next.accountSize = 0;
+        next.accountPhase = "Evaluation";
+        next.brokerName = "None";
+      }
 
       if (key === "riskAmount" || key === "rewardAmount") {
         const risk = key === "riskAmount" ? Number(value) : next.riskAmount;
@@ -83,15 +135,43 @@ export function TradeForm({
     update("strategy", (next.length ? next : [strategy]) as Trade["strategy"]);
   };
 
-  const updateScreenshotFile = (file?: File) => {
+  const updateImageFile = (key: "screenshotUrl" | "beforeScreenshotUrl" | "afterScreenshotUrl", file?: File) => {
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      update("screenshotUrl", String(reader.result));
+      update(key, String(reader.result));
     };
     reader.readAsDataURL(file);
   };
+
+  function validateTradeForReview(nextTrade: Trade) {
+    if (usesBeforeAfterScreenshots && !nextTrade.beforeScreenshotUrl) {
+      return "Trade-ka lama diwaan gelin karo ilaa aad geliso first/before screenshot.";
+    }
+
+    if (usesBeforeAfterScreenshots && nextTrade.result !== "Open" && !nextTrade.afterScreenshotUrl) {
+      return "Trade closed ah wuxuu u baahan yahay after/last image si natiijada loo caddeeyo.";
+    }
+
+    return "";
+  }
+
+  async function confirmReviewedTrade() {
+    if (!reviewTrade) return;
+    setSubmitting(true);
+    setFormMessage("");
+
+    try {
+      await onSave(reviewTrade);
+      setReviewTrade(null);
+      setTrade(baseEmptyTrade);
+    } catch {
+      // Keep the review open so the trader can return and edit the rejected data.
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <Card className="glass-panel">
@@ -104,22 +184,31 @@ export function TradeForm({
           className="grid gap-4"
           onSubmit={async (event) => {
             event.preventDefault();
-            setSubmitting(true);
+            setFormMessage("");
 
-            try {
-              await onSave({
-                ...trade,
-                id: trade.id || crypto.randomUUID(),
-                rMultiple,
-              });
-              setTrade(emptyTrade);
-            } catch {
-              // Keep the form values in place so the trader can retry after a database error.
-            } finally {
-              setSubmitting(false);
+            const tradeToSave = usesBeforeAfterScreenshots ? { ...trade, screenshotUrl: "" } : trade;
+            const nextTrade = {
+              ...tradeToSave,
+              id: trade.id || crypto.randomUUID(),
+              rMultiple,
+            };
+            const validationMessage = validateTradeForReview(nextTrade);
+
+            if (validationMessage) {
+              setFormMessage(validationMessage);
+              return;
             }
+
+            setReviewTrade(nextTrade);
           }}
         >
+          {formMessage ? (
+            <div className="flex gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              <p>{formMessage}</p>
+            </div>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Field label="Pair">
               <Select value={trade.pair} onChange={(event) => update("pair", event.target.value)}>
@@ -174,12 +263,75 @@ export function TradeForm({
           </div>
 
           <Field label="Website section">
-            <Select value={trade.area} onChange={(event) => update("area", event.target.value as Trade["area"])}>
-              {tradingAreas.map((area) => (
-                <option key={area}>{area}</option>
-              ))}
-            </Select>
+            {lockArea || selectedTrade ? (
+              <Input value={trade.area} disabled />
+            ) : (
+              <Select value={trade.area} onChange={(event) => update("area", event.target.value as Trade["area"])}>
+                {tradingAreas.map((area) => (
+                  <option key={area}>{area}</option>
+                ))}
+              </Select>
+            )}
           </Field>
+
+          {needsAccountProfile ? (
+            <div className="grid gap-4 rounded-lg border bg-background/45 p-4">
+              <div>
+                <h3 className="text-sm font-semibold">Company, account, and broker profile</h3>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Forward/Funded/Account trades must be tied to the company/account profile you are trading. Backtesting stays independent from this data.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <Field label="Prop firm / company">
+                  <Select value={trade.propFirmName ?? "None"} onChange={(event) => update("propFirmName", event.target.value as Trade["propFirmName"])}>
+                    {propFirms.map((firm) => (
+                      <option key={firm}>{firm}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <NumberField label="Account size" value={trade.accountSize ?? 0} onChange={(value) => update("accountSize", value)} />
+                <Field label="Account phase / level">
+                  <Select value={trade.accountPhase ?? "Evaluation"} onChange={(event) => update("accountPhase", event.target.value as Trade["accountPhase"])}>
+                    {accountPhases.map((phase) => (
+                      <option key={phase}>{phase}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Broker">
+                  <Select value={trade.brokerName ?? "None"} onChange={(event) => update("brokerName", event.target.value as Trade["brokerName"])}>
+                    {brokerChoices.map((broker) => (
+                      <option key={broker}>{broker}</option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="rounded-md border bg-background/60 p-3">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Company rules checklist</p>
+                  <ul className="mt-2 grid gap-2 text-sm leading-6 text-muted-foreground">
+                    {selectedFirmRules.map((rule) => (
+                      <li key={rule} className="flex gap-2">
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{rule}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-md border bg-background/60 p-3">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Broker checklist</p>
+                  <ul className="mt-2 grid gap-2 text-sm leading-6 text-muted-foreground">
+                    {selectedBrokerNotes.map((note) => (
+                      <li key={note} className="flex gap-2">
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <Field label="Strategy qodobo / confirmations">
             <Textarea
@@ -197,12 +349,15 @@ export function TradeForm({
             />
           </Field>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <NumberField label="Entry price" value={trade.entry} onChange={(value) => update("entry", value)} />
             <NumberField label="Stop Loss price" value={trade.stopLoss} onChange={(value) => update("stopLoss", value)} />
             <NumberField label="Take Profit price" value={trade.takeProfit} onChange={(value) => update("takeProfit", value)} />
             <Field label="Date">
               <Input type="date" value={trade.date} onChange={(event) => update("date", event.target.value)} />
+            </Field>
+            <Field label="Purging time">
+              <Input type="time" value={trade.purgingTime} onChange={(event) => update("purgingTime", event.target.value)} />
             </Field>
           </div>
 
@@ -227,21 +382,45 @@ export function TradeForm({
             <Field label="3RR respected">
               <Input value={respectedTarget ? "Yes - target is 3RR or higher" : "No - below 3RR target"} disabled />
             </Field>
-            <Field label="Screenshot">
-              <Input value={trade.screenshotUrl} onChange={(event) => update("screenshotUrl", event.target.value)} placeholder="https://..." />
-            </Field>
-            <Field label="Upload screenshot">
-              <Input type="file" accept="image/*" onChange={(event) => updateScreenshotFile(event.target.files?.[0])} />
-            </Field>
             <Field label="Emotion">
               <Input value={trade.emotion} onChange={(event) => update("emotion", event.target.value)} placeholder="Patient" />
             </Field>
           </div>
 
-          {trade.screenshotUrl ? (
+          {usesBeforeAfterScreenshots ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Before screenshot">
+                <Input type="file" accept="image/*" onChange={(event) => updateImageFile("beforeScreenshotUrl", event.target.files?.[0])} />
+              </Field>
+              <Field label={isClosedResult ? "After / last image" : "After / last image (marka trade-ku xirmo)"}>
+                <Input type="file" accept="image/*" onChange={(event) => updateImageFile("afterScreenshotUrl", event.target.files?.[0])} />
+              </Field>
+            </div>
+          ) : null}
+
+          {!usesBeforeAfterScreenshots && trade.screenshotUrl ? (
             <div className="overflow-hidden rounded-lg border bg-background/40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={trade.screenshotUrl} alt="Trade screenshot preview" className="max-h-72 w-full object-cover" />
+            </div>
+          ) : null}
+
+          {usesBeforeAfterScreenshots && (trade.beforeScreenshotUrl || trade.afterScreenshotUrl) ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {trade.beforeScreenshotUrl ? (
+                <div className="overflow-hidden rounded-lg border bg-background/40">
+                  <div className="border-b px-3 py-2 text-xs font-medium text-muted-foreground">Before setup</div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={trade.beforeScreenshotUrl} alt="Before backtest setup" className="max-h-72 w-full object-cover" />
+                </div>
+              ) : null}
+              {trade.afterScreenshotUrl ? (
+                <div className="overflow-hidden rounded-lg border bg-background/40">
+                  <div className="border-b px-3 py-2 text-xs font-medium text-muted-foreground">After result</div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={trade.afterScreenshotUrl} alt="After backtest result" className="max-h-72 w-full object-cover" />
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -262,12 +441,94 @@ export function TradeForm({
             ) : null}
             <Button type="submit" disabled={submitting}>
               {submitting ? <Loader2 className="size-4 animate-spin" /> : selectedTrade ? <Save className="size-4" /> : <Plus className="size-4" />}
-              {selectedTrade ? "Save changes" : "Add trade"}
+              {selectedTrade ? "Review changes" : "Review trade"}
             </Button>
           </div>
         </form>
       </CardContent>
+
+      {reviewTrade ? (
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/65 p-4 backdrop-blur-sm">
+          <div className="glass-panel max-h-[88vh] w-full max-w-3xl overflow-auto rounded-lg border bg-background/95 p-5 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold tracking-tight">Iska hubi trade-ka ka hor save</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Haddii xogtu sax tahay taabo Agree. Haddii wax qaldan yihiin ku noqo form-ka oo edit garee.</p>
+              </div>
+              <Button type="button" variant="ghost" size="icon" onClick={() => setReviewTrade(null)} aria-label="Close review">
+                <X className="size-4" />
+              </Button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <ReviewItem label="Pair" value={reviewTrade.pair} />
+              <ReviewItem label="Direction" value={reviewTrade.direction} />
+              <ReviewItem label="Area" value={reviewTrade.area} />
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Company" value={reviewTrade.propFirmName ?? "None"} /> : null}
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Account size" value={String(reviewTrade.accountSize ?? 0)} /> : null}
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Phase" value={reviewTrade.accountPhase ?? "-"} /> : null}
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Broker" value={reviewTrade.brokerName ?? "None"} /> : null}
+              <ReviewItem label="Session" value={reviewTrade.session} />
+              <ReviewItem label="Date" value={reviewTrade.date} />
+              <ReviewItem label="Purging time" value={reviewTrade.purgingTime || "-"} />
+              <ReviewItem label="Result" value={reviewTrade.result} />
+              <ReviewItem label="P/L" value={String(reviewTrade.profitLoss)} />
+              <ReviewItem label="Entry" value={String(reviewTrade.entry)} />
+              <ReviewItem label="Stop Loss" value={String(reviewTrade.stopLoss)} />
+              <ReviewItem label="Take Profit" value={String(reviewTrade.takeProfit)} />
+              <ReviewItem label="R:R" value={reviewTrade.rr.toFixed(2)} />
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border bg-background/45 p-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Before screenshot</p>
+                {reviewTrade.beforeScreenshotUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={reviewTrade.beforeScreenshotUrl} alt="Before screenshot review" className="max-h-56 w-full rounded-md object-cover" />
+                ) : (
+                  <p className="text-sm text-destructive">Missing</p>
+                )}
+              </div>
+              <div className="rounded-lg border bg-background/45 p-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">After / last image</p>
+                {reviewTrade.afterScreenshotUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={reviewTrade.afterScreenshotUrl} alt="After screenshot review" className="max-h-56 w-full rounded-md object-cover" />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{reviewTrade.result === "Open" ? "Optional while position is open" : "Missing"}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg border bg-background/45 p-3">
+              <p className="text-xs font-medium text-muted-foreground">Strategies</p>
+              <p className="mt-1 text-sm font-medium">{reviewTrade.strategy.join(" + ")}</p>
+              <p className="mt-3 text-xs font-medium text-muted-foreground">Notes</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{reviewTrade.notes || "No notes yet."}</p>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="outline" onClick={() => setReviewTrade(null)}>
+                Edit data
+              </Button>
+              <Button type="button" onClick={confirmReviewedTrade} disabled={submitting}>
+                {submitting ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                Agree & save
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </Card>
+  );
+}
+
+function ReviewItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border bg-background/45 p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 break-words text-sm font-semibold">{value || "-"}</p>
+    </div>
   );
 }
 

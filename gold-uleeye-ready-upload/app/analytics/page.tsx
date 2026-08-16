@@ -6,7 +6,7 @@ import { PerformanceBarChart } from "@/components/charts/performance-bar-chart";
 import { StatCard } from "@/components/stat-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildTradeAnalytics, useSupabaseTrades } from "@/lib/trade-data";
-import { ArrowDownRight, ArrowUpRight, Split, TrendingUp } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Clock, Split, TrendingUp } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export default function AnalyticsPage() {
@@ -24,11 +24,13 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           <StatCard label="TP results" value={`${dashboardMetrics.totalTp}`} change={formatPercent(dashboardMetrics.winRate)} icon={ArrowUpRight} tone="positive" />
           <StatCard label="SL results" value={`${dashboardMetrics.totalSl}`} change={formatPercent(dashboardMetrics.lossRate)} icon={ArrowDownRight} tone="negative" />
           <StatCard label="Buy/Sell model" value="Manual" change="No broker connection" icon={Split} />
           <StatCard label="Total P/L" value={formatCurrency(dashboardMetrics.totalProfitLoss)} change="Closed trades" icon={TrendingUp} tone="positive" />
+          <StatCard label="Best purging time" value={dashboardMetrics.bestPurgingTime?.time ?? "-"} change={dashboardMetrics.bestPurgingTime ? `${formatCurrency(dashboardMetrics.bestPurgingTime.pnl)} net` : "No time data"} icon={Clock} tone="positive" />
+          <StatCard label="Worst purging time" value={dashboardMetrics.worstPurgingTime?.time ?? "-"} change={dashboardMetrics.worstPurgingTime ? `${formatCurrency(dashboardMetrics.worstPurgingTime.pnl)} net` : "No time data"} icon={Clock} tone="negative" />
         </div>
 
         <div className="grid gap-5 xl:grid-cols-2">

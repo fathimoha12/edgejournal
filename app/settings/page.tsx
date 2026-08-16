@@ -4,6 +4,7 @@ import * as React from "react";
 import { AppShell } from "@/components/shell/app-shell";
 import { AppearanceSettings } from "@/components/appearance-settings";
 import { AdminUserManager } from "@/components/admin-user-manager";
+import { LanguageSettings } from "@/components/language-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,9 +46,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <AppShell title="Settings" subtitle="Your Edge Journal profile, account assumptions, currency, and risk preferences.">
+    <AppShell title="Settings" subtitle="Your TET Community profile, account assumptions, currency, and risk preferences.">
       <div className="grid gap-5 xl:grid-cols-2">
         <AppearanceSettings />
+        <LanguageSettings />
 
         <Card className="glass-panel">
           <CardHeader>
@@ -85,7 +87,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="grid gap-4">
             <Field label="Account name">
-              <Input defaultValue="Edge Journal account" />
+              <Input defaultValue="TET Community account" />
             </Field>
             <Field label="Starting balance">
               <Input type="number" defaultValue="25000" />

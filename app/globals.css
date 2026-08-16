@@ -70,6 +70,40 @@
   --ring: oklch(0.64 0.25 27);
 }
 
+html[data-color-preset="aplus-charcoal"] {
+  --background: oklch(0.965 0 0);
+  --foreground: oklch(0.21 0 0);
+  --card: oklch(1 0 0 / 0.92);
+  --card-foreground: oklch(0.21 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0 0);
+  --secondary: oklch(0.92 0 0);
+  --secondary-foreground: oklch(0.22 0 0);
+  --muted: oklch(0.93 0 0);
+  --muted-foreground: oklch(0.43 0 0);
+  --accent: color-mix(in oklch, var(--primary) 18%, white);
+  --accent-foreground: var(--primary);
+  --border: oklch(0.84 0 0);
+  --input: oklch(0.84 0 0);
+}
+
+html.dark[data-color-preset="aplus-charcoal"] {
+  --background: oklch(0.15 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.2 0 0 / 0.86);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.18 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.27 0 0);
+  --secondary-foreground: oklch(0.94 0 0);
+  --muted: oklch(0.25 0 0);
+  --muted-foreground: oklch(0.74 0 0);
+  --accent: color-mix(in oklch, var(--primary) 22%, black);
+  --accent-foreground: oklch(0.98 0 0);
+  --border: oklch(1 0 0 / 0.12);
+  --input: oklch(1 0 0 / 0.16);
+}
+
 * {
   border-color: var(--border);
 }
@@ -114,6 +148,12 @@ body {
   animation: coming-soon-scroll 34s linear infinite;
 }
 
+.color-preset-flow {
+  background: linear-gradient(90deg, #ee2b2b, #2e2e2e, #f2f2f2, #ffffff, #ee2b2b);
+  background-size: 260% 100%;
+  animation: color-preset-flow 5s linear infinite;
+}
+
 .coming-soon-marquee:hover .coming-soon-track {
   animation-play-state: paused;
 }
@@ -128,8 +168,22 @@ body {
   }
 }
 
+@keyframes color-preset-flow {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 260% 50%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .coming-soon-track {
+    animation: none;
+  }
+
+  .color-preset-flow {
     animation: none;
   }
 }

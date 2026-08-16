@@ -3,6 +3,13 @@
 import * as React from "react";
 
 const defaultAccent = "#ef1018";
+export const aPlusCharcoalAccentColor = "#ee2b2b";
+export const colorPresetStorageKey = "tet-community-color-preset";
+export type ColorPreset = "tet-red" | "aplus-charcoal";
+
+function normalizePreset(value: string | null): ColorPreset {
+  return value === "aplus-charcoal" ? "aplus-charcoal" : "tet-red";
+}
 
 function normalizeHex(value: string | null) {
   if (!value) return defaultAccent;
@@ -27,8 +34,13 @@ export function applyAccentColor(color: string | null) {
   root.style.setProperty("--accent-foreground", hex);
 }
 
+export function applyColorPreset(preset: ColorPreset | null) {
+  document.documentElement.dataset.colorPreset = preset === "aplus-charcoal" ? "aplus-charcoal" : "tet-red";
+}
+
 export function AppearanceProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
+    applyColorPreset(normalizePreset(window.localStorage.getItem(colorPresetStorageKey)));
     applyAccentColor(window.localStorage.getItem("edge-journal-accent-color"));
   }, []);
 

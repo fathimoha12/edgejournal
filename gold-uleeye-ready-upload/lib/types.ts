@@ -2,7 +2,7 @@ export const strategies = ["KIL", "LQ", "IRL to ERL", "ERL to IRL", "OF", "Model
 export const sessions = ["Asia", "London", "New York"] as const;
 export const results = ["TP", "SL", "BE", "Partial", "Open"] as const;
 export const directions = ["Buy", "Sell"] as const;
-export const tradingAreas = ["Backtesting", "Free Trial / Demo Challenge", "Funded Challenge", "Account Challenge"] as const;
+export const tradingAreas = ["Backtesting", "Forward Testing", "Funded Challenge", "Account Challenge"] as const;
 
 export type TradeStrategy = (typeof strategies)[number];
 export type TradeDirection = (typeof directions)[number];
@@ -17,6 +17,7 @@ export type Trade = {
   strategy: TradeStrategy[];
   strategyPoints?: string[];
   area: TradingArea;
+  backtestCycle?: string;
   session: TradingSession;
   entry: number;
   stopLoss: number;
@@ -28,7 +29,10 @@ export type Trade = {
   profitLoss: number;
   rMultiple: number;
   date: string;
+  purgingTime: string;
   screenshotUrl: string;
+  beforeScreenshotUrl?: string;
+  afterScreenshotUrl?: string;
   notes: string;
   mistake: string;
   emotion: string;

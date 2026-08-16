@@ -1,5 +1,6 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAdminSession } from "@/lib/admin-auth";
 
 const ownerEmail = "fathimhmmd418@gmail.com";
 
@@ -9,7 +10,7 @@ function getConfig() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !anonKey || !serviceRoleKey) {
-    throw new Error("User management is not configured yet.");
+    throw new Error("User management is not configured yet. Add SUPABASE_SERVICE_ROLE_KEY.");
   }
 
   return { url, anonKey, serviceRoleKey };
@@ -18,19 +19,23 @@ function getConfig() {
 export async function POST(request: Request) {
   try {
     const { url, anonKey, serviceRoleKey } = getConfig();
-    const authHeader = request.headers.get("authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) return NextResponse.json({ error: "Owner login is required." }, { status: 401 });
+    const hasAdminSession = await isAdminSession();
 
-    const userClient = createClient(url, anonKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const userResponse = await userClient.auth.getUser(token);
-    const signedInEmail = userResponse.data.user?.email?.toLowerCase();
+    if (!hasAdminSession) {
+      const authHeader = request.headers.get("authorization") ?? "";
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      if (!token) return NextResponse.json({ error: "Owner or admin login is required." }, { status: 401 });
 
-    if (userResponse.error || signedInEmail !== ownerEmail) {
-      return NextResponse.json({ error: "Only the owner can create users." }, { status: 403 });
+      const userClient = createClient(url, anonKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const userResponse = await userClient.auth.getUser(token);
+      const signedInEmail = userResponse.data.user?.email?.toLowerCase();
+
+      if (userResponse.error || signedInEmail !== ownerEmail) {
+        return NextResponse.json({ error: "Only the owner/admin can create users." }, { status: 403 });
+      }
     }
 
     const body = await request.json();
@@ -52,7 +57,7 @@ export async function POST(request: Request) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { created_by: ownerEmail },
+      user_metadata: { created_by: hasAdminSession ? "tet-admin" : ownerEmail },
     });
 
     if (createResponse.error) {

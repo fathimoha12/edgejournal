@@ -29,12 +29,12 @@ const features = [
   {
     icon: LockKeyhole,
     title: "Manual-only security",
-    description: "No broker passwords, no account credentials, and no broker connections. Edge Journal is built only for journaling and analysis.",
+    description: "No broker passwords, no account credentials, and no broker connections. TET Community is built only for journaling and analysis.",
   },
 ];
 
 const plans = ["Unlimited manual trades", "Printable reports", "Dashboard and analytics", "Private cloud sync"];
-const whatsappLink = "https://wa.me/252633454984?text=Hello%2C%20I%20want%20Edge%20Journal%20pricing%20and%20setup.";
+const whatsappLink = "https://wa.me/252633454984?text=Hello%2C%20I%20want%20TET%20Community%20pricing%20and%20setup.";
 
 const comingSoonAds = [
   {
@@ -75,8 +75,8 @@ export default function LandingPage() {
       <header className="sticky top-0 z-30 border-b bg-background/75 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <BrandMark />
-            <span className="font-semibold tracking-tight">Edge Journal</span>
+            <BrandMark className="h-[52px] w-[52px] shrink-0 sm:h-14 sm:w-14" />
+            <span className="font-semibold tracking-tight">TET Community</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <a href="#features" className="hover:text-foreground">Features</a>
@@ -103,7 +103,7 @@ export default function LandingPage() {
           className="absolute inset-0 -z-10 opacity-22"
           style={{
             backgroundImage:
-              "linear-gradient(90deg, var(--background) 0%, transparent 42%, var(--background) 100%), url('/brand/edge-logo-wide.png')",
+              "linear-gradient(90deg, var(--background) 0%, transparent 42%, var(--background) 100%), url('/brand/tet-community-logo.png')",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -116,7 +116,7 @@ export default function LandingPage() {
               Build discipline. Protect capital. Prove your edge.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Edge Journal helps traders move from emotion to evidence. Every trade becomes a clear record of strategy,
+              TET Community helps traders move from emotion to evidence. Every trade becomes a clear record of strategy,
               session, risk, execution quality, mistakes, and results.
             </p>
             <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
@@ -143,13 +143,13 @@ export default function LandingPage() {
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm text-muted-foreground">Brand preview</p>
-                  <h2 className="text-xl font-semibold">Edge Journal trader cockpit</h2>
+                  <h2 className="text-xl font-semibold">TET Community trader cockpit</h2>
                 </div>
                 <Badge variant="positive">+12.8% MTD</Badge>
               </div>
               <div className="mb-4 overflow-hidden rounded-md border bg-black p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand/edge-logo-wide.png" alt="Edge Journal brand" className="h-36 w-full object-contain sm:h-40" />
+                <img src="/brand/tet-community-logo.png" alt="TET Community brand" className="h-36 w-full object-contain sm:h-40" />
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 {[
@@ -178,7 +178,7 @@ export default function LandingPage() {
               <Badge variant="secondary" className="mb-4">Ads coming soon</Badge>
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">A TradeView-style backtesting lab is coming.</h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Soon you will be able to replay candles, slice chart moves into clean review sections, and build a stronger backtesting routine inside Edge Journal.
+                Soon you will be able to replay candles, slice chart moves into clean review sections, and build a stronger backtesting routine inside TET Community.
               </p>
             </div>
             <Button asChild variant="outline" className="w-fit">
@@ -229,10 +229,10 @@ export default function LandingPage() {
       <section id="features" className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
-            <Badge variant="outline" className="mb-4">Edge clarity</Badge>
+            <Badge variant="outline" className="mb-4">TET clarity</Badge>
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">A system for accountable traders.</h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              If you do not record what you do, you cannot improve it. Edge Journal turns trading behavior into measurable decisions.
+              If you do not record what you do, you cannot improve it. TET Community turns trading behavior into measurable decisions.
             </p>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -278,7 +278,7 @@ export default function LandingPage() {
         <Card className="glass-panel mx-auto max-w-3xl">
           <CardHeader className="text-center">
             <Badge variant="secondary" className="mx-auto mb-3">Pricing placeholder</Badge>
-            <CardTitle className="text-3xl">Want Edge Journal for your trading workflow?</CardTitle>
+            <CardTitle className="text-3xl">Want TET Community for your trading workflow?</CardTitle>
             <CardDescription>Contact us on WhatsApp for pricing, setup help, and guidance on using the journal.</CardDescription>
           </CardHeader>
           <CardContent>
