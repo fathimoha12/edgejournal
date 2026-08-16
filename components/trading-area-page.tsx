@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowUpRight, Award, BadgeDollarSign, BookOpenCheck, Camera, CheckCircle2, Clock, Download, Edit3, Eye, ImageIcon, Lightbulb, List, Maximize2, Percent, Plus, Printer, Sigma, Target, Trash2, TrendingDown, X } from "lucide-react";
+import { Award, BadgeDollarSign, BookOpenCheck, Camera, CheckCircle2, Clock, Download, Edit3, Eye, ImageIcon, Lightbulb, List, Maximize2, Percent, Plus, Printer, Sigma, Target, Trash2, TrendingDown, X } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { FloatingMessage } from "@/components/floating-message";
 import { StatCard } from "@/components/stat-card";
@@ -19,13 +19,6 @@ import { rowToTrade, tradeToRow, type TradeRow, useSupabaseTrades } from "@/lib/
 import { respectedThreeRR } from "@/lib/trade-rules";
 import { directions, results, sessions, type Trade, type TradingArea } from "@/lib/types";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
-
-const playbooks: Record<TradingArea, string[]> = {
-  Backtesting: ["Screenshot every model", "Tag multiple strategies", "Record invalidations", "Compare planned 3RR vs outcome"],
-  "Forward Testing": ["Take only 10 trades", "Use the same model proven in backtesting", "Keep risk fixed", "Do not change rules mid-sample"],
-  "Funded Challenge": ["Protect drawdown", "Only A+ confirmations", "No broker credentials stored", "Journal before scaling risk"],
-  "Account Challenge": ["Track account phase", "Respect 3RR target", "Avoid revenge trades", "Upload chart proof for each trade"],
-};
 
 const challengeLimits: Record<TradingArea, number> = {
   Backtesting: 100,
@@ -300,22 +293,7 @@ export function TradingAreaPage({ area, title, subtitle }: { area: TradingArea; 
 
         <CoachingPanel title={title} limit={challengeLimit} trades={areaTrades} notes={coachingNotes} language={language} />
 
-        <div className="grid gap-5 xl:grid-cols-[0.72fr_1.28fr]">
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle>Rules checklist</CardTitle>
-                <CardDescription>Operating standard for this section.</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                {playbooks[area].map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-md border bg-background/45 p-3 text-sm">
-                    <ArrowUpRight className="size-4 text-primary" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
+        <div className="grid gap-5">
           <Card className="glass-panel min-w-0">
             <CardHeader className="flex-row items-start justify-between gap-4">
               <div>
