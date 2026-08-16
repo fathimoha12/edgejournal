@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { AppShell } from "@/components/shell/app-shell";
+import { AccountProfileManager } from "@/components/account-profile-manager";
 import { AppearanceSettings } from "@/components/appearance-settings";
 import { AdminUserManager } from "@/components/admin-user-manager";
 import { LanguageSettings } from "@/components/language-settings";
@@ -80,30 +81,9 @@ export default function SettingsPage() {
 
         <AdminUserManager currentEmail={email} />
 
-        <Card className="glass-panel">
-          <CardHeader>
-            <CardTitle>Trading account settings</CardTitle>
-            <CardDescription>Store journal assumptions only, never broker credentials.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <Field label="Account name">
-              <Input defaultValue="TET Community account" />
-            </Field>
-            <Field label="Starting balance">
-              <Input type="number" defaultValue="25000" />
-            </Field>
-            <Field label="Currency">
-              <Select defaultValue="USD">
-                <option>USD</option>
-                <option>EUR</option>
-                <option>GBP</option>
-                <option>KES</option>
-                <option>JPY</option>
-              </Select>
-            </Field>
-            <Button className="w-fit">Save account</Button>
-          </CardContent>
-        </Card>
+        <div className="xl:col-span-2">
+          <AccountProfileManager />
+        </div>
 
         <Card className="glass-panel xl:col-span-2">
           <CardHeader>

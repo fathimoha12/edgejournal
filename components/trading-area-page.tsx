@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Award, BadgeDollarSign, BookOpenCheck, Camera, CheckCircle2, Clock, Download, Edit3, Eye, ImageIcon, Lightbulb, List, Maximize2, Percent, Plus, Printer, Sigma, Target, Trash2, TrendingDown, X } from "lucide-react";
+import { ArrowUpRight, Award, BadgeDollarSign, BookOpenCheck, Camera, CheckCircle2, Clock, Download, Edit3, Eye, ImageIcon, Lightbulb, List, Maximize2, Percent, Plus, Printer, Sigma, Target, Trash2, TrendingDown, X } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { FloatingMessage } from "@/components/floating-message";
 import { StatCard } from "@/components/stat-card";
@@ -1265,6 +1265,17 @@ function wrapCanvasText(context: CanvasRenderingContext2D, text: string, x: numb
   return y + lineHeight;
 }
 
+function tradeAccountTitle(trade: Trade) {
+  if (trade.area === "Backtesting") return "Backtesting";
+  return trade.accountProfileName || trade.propFirmName || "No account";
+}
+
+function tradeAccountMeta(trade: Trade) {
+  if (trade.area === "Backtesting") return "";
+  const size = trade.accountSize ? formatCurrency(trade.accountSize) : "No size";
+  return [trade.propFirmName, size, trade.accountPhase].filter(Boolean).join(" · ");
+}
+
 function TradeTable({
   trades,
   onOpen,
@@ -1301,8 +1312,8 @@ function TradeTable({
             <TableCell>{trade.purgingTime || "-"}</TableCell>
             <TableCell>{trade.pair}</TableCell>
             <TableCell>
-              <div className="font-medium">{trade.area === "Backtesting" ? "Backtesting" : trade.propFirmName || "None"}</div>
-              {trade.area !== "Backtesting" ? <div className="text-xs text-muted-foreground">{trade.accountSize ? formatCurrency(trade.accountSize) : "No size"} · {trade.accountPhase || "-"}</div> : null}
+              <div className="font-medium">{tradeAccountTitle(trade)}</div>
+              {trade.area !== "Backtesting" ? <div className="text-xs text-muted-foreground">{tradeAccountMeta(trade)}</div> : null}
             </TableCell>
             <TableCell>{trade.session}</TableCell>
             <TableCell>
@@ -1435,8 +1446,8 @@ function OpenPositionsPanel({
                 </TableCell>
                 <TableCell className="font-medium">{trade.pair}</TableCell>
                 <TableCell>
-                  <div className="font-medium">{trade.area === "Backtesting" ? "Backtesting" : trade.propFirmName || "None"}</div>
-                  {trade.area !== "Backtesting" ? <div className="text-xs text-muted-foreground">{trade.accountSize ? formatCurrency(trade.accountSize) : "No size"}</div> : null}
+                  <div className="font-medium">{tradeAccountTitle(trade)}</div>
+                  {trade.area !== "Backtesting" ? <div className="text-xs text-muted-foreground">{tradeAccountMeta(trade)}</div> : null}
                 </TableCell>
                 <TableCell>{trade.session}</TableCell>
                 <TableCell>{trade.rr.toFixed(2)}</TableCell>
@@ -1675,10 +1686,11 @@ function TradeDetailModal({
               <Detail label="Stop Loss" value={String(trade.stopLoss)} />
               <Detail label="Take Profit" value={String(trade.takeProfit)} />
               <Detail label="Purging time" value={trade.purgingTime || "-"} />
-              {trade.area !== "Backtesting" ? <Detail label="Company" value={trade.propFirmName || "None"} /> : null}
+              {trade.area !== "Backtesting" ? <Detail label="Account" value={tradeAccountTitle(trade)} /> : null}
+              {trade.area !== "Backtesting" ? <Detail label="Company" value={trade.propFirmName || "-"} /> : null}
               {trade.area !== "Backtesting" ? <Detail label="Account size" value={trade.accountSize ? formatCurrency(trade.accountSize) : "-"} /> : null}
               {trade.area !== "Backtesting" ? <Detail label="Phase" value={trade.accountPhase || "-"} /> : null}
-              {trade.area !== "Backtesting" ? <Detail label="Broker" value={trade.brokerName || "None"} /> : null}
+              {trade.area !== "Backtesting" ? <Detail label="Broker" value={trade.brokerName || "-"} /> : null}
               <Detail label="Risk" value={formatCurrency(trade.riskAmount)} />
               <Detail label="Reward" value={formatCurrency(trade.rewardAmount)} />
               <Detail label="R:R" value={trade.rr.toFixed(2)} />

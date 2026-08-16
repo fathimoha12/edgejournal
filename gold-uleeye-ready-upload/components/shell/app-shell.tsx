@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
   BookOpenCheck,
+  CircleDot,
+  Database,
   FastForward,
   FlaskConical,
   GraduationCap,
@@ -26,6 +28,8 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Trade Journal", href: "/journal", icon: BookOpenCheck },
+  { name: "Open Positions", href: "/open-positions", icon: CircleDot },
+  { name: "System", href: "/system", icon: Database },
   { name: "Lessons", href: "/lessons", icon: GraduationCap },
   { name: "Backtesting", href: "/backtesting", icon: FlaskConical },
   { name: "Forward Test", href: "/forward-testing", icon: FastForward },

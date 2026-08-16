@@ -15,8 +15,18 @@ create table if not exists public.trading_accounts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null default 'Primary account',
+  firm_name text,
   starting_balance numeric(14, 2) not null default 0,
+  account_type text not null default 'Challenge',
   currency text not null default 'USD',
+  account_phase text,
+  broker_name text,
+  max_daily_loss numeric(14, 2) not null default 0,
+  max_loss numeric(14, 2) not null default 0,
+  target_profit_phase_1 numeric(14, 2) not null default 0,
+  target_profit_phase_2 numeric(14, 2) not null default 0,
+  rules_notes text,
+  is_active boolean not null default true,
   default_risk_amount numeric(14, 2) not null default 100,
   default_rr numeric(8, 3) not null default 3,
   max_daily_risk_percent numeric(5, 2) not null default 3,
@@ -77,6 +87,12 @@ create table if not exists public.trades (
   strategy_names text[] not null default '{}',
   area text not null default 'Backtesting',
   backtest_cycle text not null default 'Journey 1',
+  trading_account_id uuid references public.trading_accounts(id) on delete set null,
+  account_profile_name text,
+  prop_firm_name text,
+  account_size numeric(14, 2),
+  account_phase text,
+  broker_name text,
   strategy_points text[] not null default '{}',
   emotion text,
   mistake text,
@@ -92,6 +108,23 @@ alter table public.trades add column if not exists before_screenshot_url text;
 alter table public.trades add column if not exists after_screenshot_url text;
 alter table public.trades add column if not exists backtest_cycle text not null default 'Journey 1';
 alter table public.trades add column if not exists purging_time time;
+alter table public.trades add column if not exists trading_account_id uuid references public.trading_accounts(id) on delete set null;
+alter table public.trades add column if not exists account_profile_name text;
+alter table public.trades add column if not exists prop_firm_name text;
+alter table public.trades add column if not exists account_size numeric(14, 2);
+alter table public.trades add column if not exists account_phase text;
+alter table public.trades add column if not exists broker_name text;
+
+alter table public.trading_accounts add column if not exists firm_name text;
+alter table public.trading_accounts add column if not exists account_type text not null default 'Challenge';
+alter table public.trading_accounts add column if not exists account_phase text;
+alter table public.trading_accounts add column if not exists broker_name text;
+alter table public.trading_accounts add column if not exists max_daily_loss numeric(14, 2) not null default 0;
+alter table public.trading_accounts add column if not exists max_loss numeric(14, 2) not null default 0;
+alter table public.trading_accounts add column if not exists target_profit_phase_1 numeric(14, 2) not null default 0;
+alter table public.trading_accounts add column if not exists target_profit_phase_2 numeric(14, 2) not null default 0;
+alter table public.trading_accounts add column if not exists rules_notes text;
+alter table public.trading_accounts add column if not exists is_active boolean not null default true;
 
 create table if not exists public.screenshots (
   id uuid primary key default gen_random_uuid(),
@@ -356,6 +389,8 @@ create index if not exists trades_user_date_idx on public.trades(user_id, trade_
 create index if not exists trades_user_pair_idx on public.trades(user_id, pair);
 create index if not exists trades_user_strategy_idx on public.trades(user_id, strategy_id);
 create index if not exists trades_user_backtest_cycle_idx on public.trades(user_id, area, backtest_cycle);
+create index if not exists trades_user_trading_account_idx on public.trades(user_id, trading_account_id);
+create index if not exists trading_accounts_user_active_idx on public.trading_accounts(user_id, is_active);
 create index if not exists journal_notes_user_date_idx on public.journal_notes(user_id, note_date desc);
 create index if not exists course_lessons_user_order_idx on public.course_lessons(user_id, lesson_order, created_at);
 create index if not exists course_playlists_user_order_idx on public.course_playlists(user_id, playlist_order, created_at);

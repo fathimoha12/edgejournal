@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { accountProfileLabel, useAccountProfiles } from "@/lib/account-profiles";
 import { calculateRMultiple, respectedThreeRR } from "@/lib/trade-rules";
 import type { Trade, TradeStrategy } from "@/lib/types";
 import { directions, results, sessions, strategies, tradingAreas } from "@/lib/types";
@@ -24,6 +25,12 @@ const emptyTrade: Trade = {
   strategyPoints: ["Liquidity sweep", "Displacement", "3RR target clear"],
   area: "Backtesting",
   backtestCycle: "Journey 1",
+  accountProfileId: "",
+  accountProfileName: "",
+  propFirmName: "",
+  accountSize: 0,
+  accountPhase: "",
+  brokerName: "",
   session: "London",
   entry: 0,
   stopLoss: 0,
@@ -62,6 +69,7 @@ export function TradeForm({
   const [submitting, setSubmitting] = React.useState(false);
   const [formMessage, setFormMessage] = React.useState("");
   const [reviewTrade, setReviewTrade] = React.useState<Trade | null>(null);
+  const { profiles: accountProfiles, loading: accountsLoading, error: accountsError } = useAccountProfiles();
 
   React.useEffect(() => {
     setTrade(selectedTrade ?? baseEmptyTrade);
@@ -72,10 +80,21 @@ export function TradeForm({
   const strategyPointsText = (trade.strategyPoints ?? []).join("\n");
   const usesBeforeAfterScreenshots = tradingAreas.includes(trade.area);
   const isClosedResult = trade.result !== "Open";
+  const needsAccountProfile = trade.area !== "Backtesting";
+  const selectedAccount = accountProfiles.find((profile) => profile.id === trade.accountProfileId);
 
   const update = <K extends keyof Trade>(key: K, value: Trade[K]) => {
     setTrade((current) => {
       const next = { ...current, [key]: value };
+
+      if (key === "area" && value === "Backtesting") {
+        next.accountProfileId = "";
+        next.accountProfileName = "";
+        next.propFirmName = "";
+        next.accountSize = 0;
+        next.accountPhase = "";
+        next.brokerName = "";
+      }
 
       if (key === "riskAmount" || key === "rewardAmount") {
         const risk = key === "riskAmount" ? Number(value) : next.riskAmount;
@@ -93,6 +112,19 @@ export function TradeForm({
       return next;
     });
   };
+
+  function selectAccountProfile(profileId: string) {
+    const profile = accountProfiles.find((item) => item.id === profileId);
+    setTrade((current) => ({
+      ...current,
+      accountProfileId: profile?.id ?? "",
+      accountProfileName: profile?.name ?? "",
+      propFirmName: profile?.firmName ?? "",
+      accountSize: profile?.accountSize ?? 0,
+      accountPhase: profile?.accountPhase ?? "",
+      brokerName: profile?.brokerName ?? "",
+    }));
+  }
 
   const toggleStrategy = (strategy: TradeStrategy) => {
     const current = trade.strategy;
@@ -117,6 +149,10 @@ export function TradeForm({
 
     if (usesBeforeAfterScreenshots && nextTrade.result !== "Open" && !nextTrade.afterScreenshotUrl) {
       return "Trade closed ah wuxuu u baahan yahay after/last image si natiijada loo caddeeyo.";
+    }
+
+    if (needsAccountProfile && !nextTrade.accountProfileId) {
+      return "Fadlan dooro account-ka aad trade-kan ka qaadayso. Accounts-ka waxaad ka samaysan kartaa Settings.";
     }
 
     return "";
@@ -228,7 +264,7 @@ export function TradeForm({
           </div>
 
           <Field label="Website section">
-            {lockArea ? (
+            {lockArea || selectedTrade ? (
               <Input value={trade.area} disabled />
             ) : (
               <Select value={trade.area} onChange={(event) => update("area", event.target.value as Trade["area"])}>
@@ -238,6 +274,87 @@ export function TradeForm({
               </Select>
             )}
           </Field>
+
+          {needsAccountProfile ? (
+            <div className="grid gap-4 rounded-lg border bg-background/45 p-4">
+              <div>
+                <h3 className="text-sm font-semibold">Select your account</h3>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Forward/Funded/Account trades must be tied to one account profile you created in Settings. Backtesting stays independent from this data.
+                </p>
+              </div>
+              <Field label="Account profile">
+                <Select value={trade.accountProfileId ?? ""} onChange={(event) => selectAccountProfile(event.target.value)}>
+                  <option value="">{accountsLoading ? "Loading accounts..." : "Select your account"}</option>
+                  {accountProfiles.map((profile) => (
+                    <option key={profile.id} value={profile.id}>
+                      {accountProfileLabel(profile)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              {accountsError ? <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{accountsError}</p> : null}
+              {!accountsLoading && !accountProfiles.length ? (
+                <p className="rounded-md border bg-background/60 p-3 text-sm text-muted-foreground">
+                  Account lama hayo weli. Tag Settings oo samee account profile sida FTMO 10K A ama FTMO 10K B, kadib halkan ayuu ka soo muuqanayaa.
+                </p>
+              ) : null}
+              {selectedAccount ? (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <Field label="Account label">
+                    <Input value={selectedAccount.name} disabled />
+                  </Field>
+                  <Field label="Company">
+                    <Input value={selectedAccount.firmName || "-"} disabled />
+                  </Field>
+                  <Field label="Account size">
+                    <Input value={`${selectedAccount.currency} ${selectedAccount.accountSize.toLocaleString()}`} disabled />
+                  </Field>
+                  <Field label="Phase / level">
+                    <Input value={selectedAccount.accountPhase || "-"} disabled />
+                  </Field>
+                  <Field label="Account type">
+                    <Input value={selectedAccount.accountType} disabled />
+                  </Field>
+                  <Field label="Broker">
+                    <Input value={selectedAccount.brokerName || "-"} disabled />
+                  </Field>
+                  <Field label="Broker safety">
+                    <Input value="Never store broker password or login credentials." disabled />
+                  </Field>
+                </div>
+              ) : null}
+              {selectedAccount ? (
+                <div className="grid gap-3 lg:grid-cols-2">
+                  <div className="rounded-md border bg-background/60 p-3">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Account rules</p>
+                    <div className="mt-2 grid gap-2 text-sm leading-6 text-muted-foreground">
+                      <p>Maximum daily loss: {selectedAccount.currency} {selectedAccount.maxDailyLoss.toLocaleString()}</p>
+                      <p>Maximum loss: {selectedAccount.currency} {selectedAccount.maxLoss.toLocaleString()}</p>
+                      <p>Target profit Phase 1: {selectedAccount.currency} {selectedAccount.targetProfitPhase1.toLocaleString()}</p>
+                      <p>Target profit Phase 2: {selectedAccount.currency} {selectedAccount.targetProfitPhase2.toLocaleString()}</p>
+                      <p>{selectedAccount.rulesNotes || "No extra rules added yet. Add company rules inside System so they appear here before every trade."}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-md border bg-background/60 p-3">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Broker checklist</p>
+                    <ul className="mt-2 grid gap-2 text-sm leading-6 text-muted-foreground">
+                      {[
+                        "Check spread, commission, slippage, and session execution.",
+                        "Confirm account currency, leverage, and symbol contract size.",
+                        "Do not save broker passwords, investor passwords, or login credentials.",
+                      ].map((note) => (
+                        <li key={note} className="flex gap-2">
+                          <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+                          <span>{note}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <Field label="Strategy qodobo / confirmations">
             <Textarea
@@ -370,6 +487,11 @@ export function TradeForm({
               <ReviewItem label="Pair" value={reviewTrade.pair} />
               <ReviewItem label="Direction" value={reviewTrade.direction} />
               <ReviewItem label="Area" value={reviewTrade.area} />
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Account" value={reviewTrade.accountProfileName ?? "-"} /> : null}
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Company" value={reviewTrade.propFirmName ?? "-"} /> : null}
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Account size" value={String(reviewTrade.accountSize ?? 0)} /> : null}
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Phase" value={reviewTrade.accountPhase ?? "-"} /> : null}
+              {reviewTrade.area !== "Backtesting" ? <ReviewItem label="Broker" value={reviewTrade.brokerName ?? "-"} /> : null}
               <ReviewItem label="Session" value={reviewTrade.session} />
               <ReviewItem label="Date" value={reviewTrade.date} />
               <ReviewItem label="Purging time" value={reviewTrade.purgingTime || "-"} />

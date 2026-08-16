@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { accountPhases, brokerChoices, propFirms, results, sessions, strategies, tradingAreas, type Trade, type TradeResult, type TradeStrategy, type TradingArea } from "@/lib/types";
+import { results, sessions, strategies, tradingAreas, type Trade, type TradeResult, type TradeStrategy, type TradingArea } from "@/lib/types";
 
 export type TradeRow = {
   id: string;
@@ -24,6 +24,8 @@ export type TradeRow = {
   strategy_names: string[] | null;
   area: string | null;
   backtest_cycle?: string | null;
+  trading_account_id?: string | null;
+  account_profile_name?: string | null;
   prop_firm_name?: string | null;
   account_size?: number | string | null;
   account_phase?: string | null;
@@ -40,9 +42,6 @@ export type TradeRow = {
 const startingEquity = 25000;
 const strategySet = new Set<string>(strategies);
 const areaSet = new Set<string>(tradingAreas);
-const propFirmSet = new Set<string>(propFirms);
-const brokerSet = new Set<string>(brokerChoices);
-const accountPhaseSet = new Set<string>(accountPhases);
 
 function asNumber(value: number | string) {
   return Number(value) || 0;
@@ -88,10 +87,12 @@ export function rowToTrade(row: TradeRow): Trade {
     strategyPoints: row.strategy_points ?? [],
     area,
     backtestCycle: row.backtest_cycle || "Journey 1",
-    propFirmName: propFirmSet.has(row.prop_firm_name ?? "") ? (row.prop_firm_name as Trade["propFirmName"]) : "None",
+    accountProfileId: row.trading_account_id ?? "",
+    accountProfileName: row.account_profile_name ?? "",
+    propFirmName: row.prop_firm_name ?? "",
     accountSize: asNumber(row.account_size ?? 0),
-    accountPhase: accountPhaseSet.has(row.account_phase ?? "") ? (row.account_phase as Trade["accountPhase"]) : "Evaluation",
-    brokerName: brokerSet.has(row.broker_name ?? "") ? (row.broker_name as Trade["brokerName"]) : "None",
+    accountPhase: row.account_phase ?? "",
+    brokerName: row.broker_name ?? "",
     session: row.session,
     entry: asNumber(row.entry),
     stopLoss: asNumber(row.stop_loss),
@@ -134,6 +135,8 @@ export function tradeToRow(trade: Trade, userId: string) {
     strategy_names: trade.strategy,
     area: trade.area,
     backtest_cycle: trade.backtestCycle || "Journey 1",
+    trading_account_id: trade.area === "Backtesting" ? null : trade.accountProfileId || null,
+    account_profile_name: trade.area === "Backtesting" ? null : trade.accountProfileName || null,
     prop_firm_name: trade.area === "Backtesting" ? null : trade.propFirmName || null,
     account_size: trade.area === "Backtesting" ? null : trade.accountSize || null,
     account_phase: trade.area === "Backtesting" ? null : trade.accountPhase || null,

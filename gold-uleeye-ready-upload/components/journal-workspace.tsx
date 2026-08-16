@@ -45,6 +45,12 @@ type TradeRow = {
   strategy_names: string[] | null;
   area: string | null;
   backtest_cycle?: string | null;
+  trading_account_id?: string | null;
+  account_profile_name?: string | null;
+  prop_firm_name?: string | null;
+  account_size?: number | string | null;
+  account_phase?: string | null;
+  broker_name?: string | null;
   strategy_points: string[] | null;
   emotion: string | null;
   mistake: string | null;
@@ -74,6 +80,12 @@ function rowToTrade(row: TradeRow): Trade {
     strategyPoints: row.strategy_points ?? [],
     area,
     backtestCycle: row.backtest_cycle || "Journey 1",
+    accountProfileId: row.trading_account_id ?? "",
+    accountProfileName: row.account_profile_name ?? "",
+    propFirmName: row.prop_firm_name ?? "",
+    accountSize: asNumber(row.account_size ?? 0),
+    accountPhase: row.account_phase ?? "",
+    brokerName: row.broker_name ?? "",
     session: row.session,
     entry: asNumber(row.entry),
     stopLoss: asNumber(row.stop_loss),
@@ -116,6 +128,12 @@ function tradeToRow(trade: Trade, userId: string) {
     strategy_names: trade.strategy,
     area: trade.area,
     backtest_cycle: trade.backtestCycle || "Journey 1",
+    trading_account_id: trade.area === "Backtesting" ? null : trade.accountProfileId || null,
+    account_profile_name: trade.area === "Backtesting" ? null : trade.accountProfileName || null,
+    prop_firm_name: trade.area === "Backtesting" ? null : trade.propFirmName || null,
+    account_size: trade.area === "Backtesting" ? null : trade.accountSize || null,
+    account_phase: trade.area === "Backtesting" ? null : trade.accountPhase || null,
+    broker_name: trade.area === "Backtesting" ? null : trade.brokerName || null,
     strategy_points: trade.strategyPoints ?? [],
     emotion: trade.emotion || null,
     mistake: trade.mistake || "None",
@@ -208,6 +226,10 @@ export function JournalWorkspace() {
 
       if (trade.area === "Backtesting" && (!exists || existingTrade?.area !== "Backtesting") && backtestingTrades >= 100) {
         throw new Error(`${targetCycle} limit reached. You can save only 100 backtesting trades in one journey.`);
+      }
+
+      if (exists && existingTrade && existingTrade.area !== trade.area) {
+        throw new Error("Trade hore loo diwaan geliyay section-kiisa lama beddeli karo. Haddii uu qalad yahay, delete garee kadib trade cusub ku geli section sax ah.");
       }
 
       if (dailyDisciplineAreas.has(trade.area)) {
@@ -331,42 +353,10 @@ export function JournalWorkspace() {
     <div className="grid gap-5">
       <FloatingMessage message={databaseMessage} tone={messageTone} onClose={() => setDatabaseMessage("")} />
       <TradeForm selectedTrade={selectedTrade} onCancel={() => setSelectedTrade(null)} onSave={saveTradeToSql} />
-
       <Card className="glass-panel">
-        <CardHeader>
-          <CardTitle>Trade list</CardTitle>
-          <CardDescription>
-            This journal is saved to your private account workspace{accountEmail ? `: ${accountEmail}` : ""}. Browser storage is not used for trades.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={loadSampleDataToSql}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              Load sample data
-            </Button>
-            <Button type="button" variant="destructive" size="sm" disabled={busy} onClick={clearAllTradesFromSql}>
-              Clear all trades
-            </Button>
-          </div>
-          <FilterBar filters={filters} onChange={setFilters} />
-          {!loaded ? (
-            <div className="grid rounded-lg border border-dashed bg-background/35 p-8 text-center text-sm text-muted-foreground">
-              <span className="inline-flex items-center justify-center gap-2">
-                <Loader2 className="size-4 animate-spin" />
-                Loading trades...
-              </span>
-            </div>
-          ) : filteredTrades.length ? (
-            <TradeTable trades={filteredTrades} onView={setOverviewTrade} onEdit={setSelectedTrade} onDelete={deleteTradeFromSql} />
-          ) : (
-            <div className="rounded-lg border border-dashed bg-background/35 p-8 text-center">
-              <p className="font-medium">Wali trade lama gelin.</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Add a new trade with the form above, or use Load sample data if you want a quick example.
-              </p>
-            </div>
-          )}
+        <CardContent className="py-4 text-sm text-muted-foreground">
+          Trade Journal waa meesha trade cusub laga geliyo oo keliya. Trade list, edit, delete, iyo open positions waxaad ka eegaysaa qaybaha Backtesting, Forward, Funded, Account, ama Open Positions.
+          {accountEmail ? ` Account: ${accountEmail}` : ""}
         </CardContent>
       </Card>
 

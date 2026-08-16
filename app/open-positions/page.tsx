@@ -14,6 +14,17 @@ import { rowToTrade, tradeToRow, type TradeRow, useSupabaseTrades } from "@/lib/
 import type { Trade } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
+function tradeAccountTitle(trade: Trade) {
+  if (trade.area === "Backtesting") return "Backtesting";
+  return trade.accountProfileName || trade.propFirmName || "No account";
+}
+
+function tradeAccountMeta(trade: Trade) {
+  if (trade.area === "Backtesting") return "";
+  const size = trade.accountSize ? formatCurrency(trade.accountSize) : "No size";
+  return [trade.propFirmName, size, trade.accountPhase].filter(Boolean).join(" · ");
+}
+
 export default function OpenPositionsPage() {
   const { trades, setTrades, accountEmail, loading, error } = useSupabaseTrades();
   const [editingTrade, setEditingTrade] = React.useState<Trade | null>(null);
@@ -104,8 +115,8 @@ export default function OpenPositionsPage() {
                       <TableCell className="font-medium">{trade.pair}</TableCell>
                       <TableCell>{trade.area}</TableCell>
                       <TableCell>
-                        <div className="font-medium">{trade.area === "Backtesting" ? "Backtesting" : trade.propFirmName || "None"}</div>
-                        {trade.area !== "Backtesting" ? <div className="text-xs text-muted-foreground">{trade.accountSize ? formatCurrency(trade.accountSize) : "No size"} · {trade.accountPhase || "-"}</div> : null}
+                        <div className="font-medium">{tradeAccountTitle(trade)}</div>
+                        {trade.area !== "Backtesting" ? <div className="text-xs text-muted-foreground">{tradeAccountMeta(trade)}</div> : null}
                       </TableCell>
                       <TableCell>{trade.session}</TableCell>
                       <TableCell>{trade.rr.toFixed(2)}</TableCell>
@@ -164,7 +175,7 @@ export default function OpenPositionsPage() {
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <Badge variant="secondary">Open</Badge>
-              <Badge variant="outline">{previewTrade.propFirmName || "No firm"}</Badge>
+              <Badge variant="outline">{tradeAccountTitle(previewTrade)}</Badge>
               <p className="text-sm text-muted-foreground sm:col-span-2">{previewTrade.notes || "No notes yet."}</p>
             </CardContent>
           </Card>

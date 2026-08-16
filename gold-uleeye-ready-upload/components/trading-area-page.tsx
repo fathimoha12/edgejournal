@@ -20,13 +20,6 @@ import { respectedThreeRR } from "@/lib/trade-rules";
 import { directions, results, sessions, type Trade, type TradingArea } from "@/lib/types";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 
-const playbooks: Record<TradingArea, string[]> = {
-  Backtesting: ["Screenshot every model", "Tag multiple strategies", "Record invalidations", "Compare planned 3RR vs outcome"],
-  "Forward Testing": ["Take only 10 trades", "Use the same model proven in backtesting", "Keep risk fixed", "Do not change rules mid-sample"],
-  "Funded Challenge": ["Protect drawdown", "Only A+ confirmations", "No broker credentials stored", "Journal before scaling risk"],
-  "Account Challenge": ["Track account phase", "Respect 3RR target", "Avoid revenge trades", "Upload chart proof for each trade"],
-};
-
 const challengeLimits: Record<TradingArea, number> = {
   Backtesting: 100,
   "Forward Testing": 10,
@@ -263,6 +256,10 @@ export function TradingAreaPage({ area, title, subtitle }: { area: TradingArea; 
             }}
             onToggleArchived={() => setShowArchivedJourneys((current) => !current)}
             onStartNew={() => {
+              if (areaTrades.length < challengeLimit) {
+                showMessage(`${activeCycle} wali ma dhammaan. Journal cusub lama bilaabi karo ilaa ${challengeLimit} trades la gaarsiiyo.`, "neutral");
+                return;
+              }
               setActiveCycle(nextJourneyName([...areaJourneys.map((journey) => journey.name), activeCycle]));
               setShowArchivedJourneys(true);
               setReportView("table");
@@ -296,22 +293,7 @@ export function TradingAreaPage({ area, title, subtitle }: { area: TradingArea; 
 
         <CoachingPanel title={title} limit={challengeLimit} trades={areaTrades} notes={coachingNotes} language={language} />
 
-        <div className="grid gap-5 xl:grid-cols-[0.72fr_1.28fr]">
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle>Rules checklist</CardTitle>
-                <CardDescription>Operating standard for this section.</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                {playbooks[area].map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-md border bg-background/45 p-3 text-sm">
-                    <ArrowUpRight className="size-4 text-primary" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
+        <div className="grid gap-5">
           <Card className="glass-panel min-w-0">
             <CardHeader className="flex-row items-start justify-between gap-4">
               <div>
@@ -1283,6 +1265,17 @@ function wrapCanvasText(context: CanvasRenderingContext2D, text: string, x: numb
   return y + lineHeight;
 }
 
+function tradeAccountTitle(trade: Trade) {
+  if (trade.area === "Backtesting") return "Backtesting";
+  return trade.accountProfileName || trade.propFirmName || "No account";
+}
+
+function tradeAccountMeta(trade: Trade) {
+  if (trade.area === "Backtesting") return "";
+  const size = trade.accountSize ? formatCurrency(trade.accountSize) : "No size";
+  return [trade.propFirmName, size, trade.accountPhase].filter(Boolean).join(" · ");
+}
+
 function TradeTable({
   trades,
   onOpen,
@@ -1301,6 +1294,7 @@ function TradeTable({
           <TableHead>Trade date</TableHead>
           <TableHead>Purging time</TableHead>
           <TableHead>Pair</TableHead>
+          <TableHead>Company</TableHead>
           <TableHead>Session</TableHead>
           <TableHead>Strategies</TableHead>
           <TableHead>Result</TableHead>
@@ -1317,6 +1311,10 @@ function TradeTable({
             </TableCell>
             <TableCell>{trade.purgingTime || "-"}</TableCell>
             <TableCell>{trade.pair}</TableCell>
+            <TableCell>
+              <div className="font-medium">{tradeAccountTitle(trade)}</div>
+              {trade.area !== "Backtesting" ? <div className="text-xs text-muted-foreground">{tradeAccountMeta(trade)}</div> : null}
+            </TableCell>
             <TableCell>{trade.session}</TableCell>
             <TableCell>
               <div className="flex flex-wrap gap-1">
@@ -1433,6 +1431,7 @@ function OpenPositionsPanel({
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Pair</TableHead>
+              <TableHead>Company</TableHead>
               <TableHead>Session</TableHead>
               <TableHead>R:R</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -1446,6 +1445,10 @@ function OpenPositionsPanel({
                   <div className="text-xs text-muted-foreground">{trade.purgingTime || "No time"}</div>
                 </TableCell>
                 <TableCell className="font-medium">{trade.pair}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{tradeAccountTitle(trade)}</div>
+                  {trade.area !== "Backtesting" ? <div className="text-xs text-muted-foreground">{tradeAccountMeta(trade)}</div> : null}
+                </TableCell>
                 <TableCell>{trade.session}</TableCell>
                 <TableCell>{trade.rr.toFixed(2)}</TableCell>
                 <TableCell className="text-right">
@@ -1683,6 +1686,11 @@ function TradeDetailModal({
               <Detail label="Stop Loss" value={String(trade.stopLoss)} />
               <Detail label="Take Profit" value={String(trade.takeProfit)} />
               <Detail label="Purging time" value={trade.purgingTime || "-"} />
+              {trade.area !== "Backtesting" ? <Detail label="Account" value={tradeAccountTitle(trade)} /> : null}
+              {trade.area !== "Backtesting" ? <Detail label="Company" value={trade.propFirmName || "-"} /> : null}
+              {trade.area !== "Backtesting" ? <Detail label="Account size" value={trade.accountSize ? formatCurrency(trade.accountSize) : "-"} /> : null}
+              {trade.area !== "Backtesting" ? <Detail label="Phase" value={trade.accountPhase || "-"} /> : null}
+              {trade.area !== "Backtesting" ? <Detail label="Broker" value={trade.brokerName || "-"} /> : null}
               <Detail label="Risk" value={formatCurrency(trade.riskAmount)} />
               <Detail label="Reward" value={formatCurrency(trade.rewardAmount)} />
               <Detail label="R:R" value={trade.rr.toFixed(2)} />

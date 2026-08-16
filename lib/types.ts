@@ -3,6 +3,7 @@ export const sessions = ["Asia", "London", "New York"] as const;
 export const results = ["TP", "SL", "BE", "Partial", "Open"] as const;
 export const directions = ["Buy", "Sell"] as const;
 export const tradingAreas = ["Backtesting", "Forward Testing", "Funded Challenge", "Account Challenge"] as const;
+export const accountTypes = ["Challenge", "Demo Test", "Live Account"] as const;
 export const propFirms = ["None", "FTMO", "The5ers", "Funding Pips", "FundedNext", "Alpha Capital", "MyFundedFX"] as const;
 export const brokerChoices = ["None", "IC Markets", "Pepperstone", "OANDA", "Eightcap", "XM", "Exness", "Deriv"] as const;
 export const accountPhases = ["Evaluation", "Verification", "Funded", "Live Account", "Personal Account"] as const;
@@ -12,9 +13,26 @@ export type TradeDirection = (typeof directions)[number];
 export type TradeResult = (typeof results)[number];
 export type TradingSession = (typeof sessions)[number];
 export type TradingArea = (typeof tradingAreas)[number];
-export type PropFirmName = (typeof propFirms)[number];
-export type BrokerName = (typeof brokerChoices)[number];
-export type AccountPhase = (typeof accountPhases)[number];
+export type AccountType = (typeof accountTypes)[number];
+export type PropFirmName = string;
+export type BrokerName = string;
+export type AccountPhase = string;
+
+export type AccountProfile = {
+  id: string;
+  name: string;
+  firmName: string;
+  accountSize: number;
+  accountType: AccountType;
+  accountPhase: string;
+  brokerName: string;
+  currency: string;
+  maxDailyLoss: number;
+  maxLoss: number;
+  targetProfitPhase1: number;
+  targetProfitPhase2: number;
+  rulesNotes: string;
+};
 
 export type Trade = {
   id: string;
@@ -24,10 +42,12 @@ export type Trade = {
   strategyPoints?: string[];
   area: TradingArea;
   backtestCycle?: string;
-  propFirmName?: PropFirmName;
+  accountProfileId?: string;
+  accountProfileName?: string;
+  propFirmName?: string;
   accountSize?: number;
-  accountPhase?: AccountPhase;
-  brokerName?: BrokerName;
+  accountPhase?: string;
+  brokerName?: string;
   session: TradingSession;
   entry: number;
   stopLoss: number;
